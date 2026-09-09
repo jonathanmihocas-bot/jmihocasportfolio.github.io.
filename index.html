@@ -1,0 +1,3626 @@
+<title>Mihocas Hardware Log</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ============================================================
+   TOKENS: dark-first. Bare :root is the dark palette.
+   Light is re-declared for prefers-color-scheme AND the toggle.
+   ============================================================ */
+:root{
+  --ground:#0D1117;
+  --ground-2:#11171F;
+  --panel:#161D27;
+  --panel-2:#1C242F;
+  --line:#26303C;
+  --line-soft:#1E2732;
+  --ink:#E4E9F0;
+  --ink-2:#A9B6C5;
+  --muted:#74838F;
+  --led:#FF4B2B;          /* Arduino matrix red, the one bold note */
+  --led-soft:#FF7A5C;
+  --led-ghost:#2A1A18;
+  --trace:#49A8B8;        /* muted cyan, hardware/nets */
+  --solder:#D9A441;       /* brass, mechanical */
+  --grid:rgba(255,255,255,.035);
+  --shadow:0 18px 50px -20px rgba(0,0,0,.8);
+  --radius:3px;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono","SF Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --ground:#F4F6F8;
+    --ground-2:#EDF0F4;
+    --panel:#FFFFFF;
+    --panel-2:#F7F9FB;
+    --line:#D5DCE4;
+    --line-soft:#E3E9EF;
+    --ink:#141A22;
+    --ink-2:#414E5C;
+    --muted:#6E7C89;
+    --led:#D8341A;
+    --led-soft:#B02A12;
+    --led-ghost:#F2DCD6;
+    --trace:#1E7C8C;
+    --solder:#9A6F16;
+    --grid:rgba(0,0,0,.04);
+    --shadow:0 18px 44px -22px rgba(20,30,45,.32);
+  }
+}
+:root[data-theme="light"]{
+  --ground:#F4F6F8; --ground-2:#EDF0F4; --panel:#FFFFFF; --panel-2:#F7F9FB;
+  --line:#D5DCE4; --line-soft:#E3E9EF; --ink:#141A22; --ink-2:#414E5C;
+  --muted:#6E7C89; --led:#D8341A; --led-soft:#B02A12; --led-ghost:#F2DCD6;
+  --trace:#1E7C8C; --solder:#9A6F16; --grid:rgba(0,0,0,.04);
+  --shadow:0 18px 44px -22px rgba(20,30,45,.32);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:15px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:var(--led);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--led);outline-offset:2px}
+button{font:inherit;color:inherit}
+
+/* ---------- shared shell ---------- */
+.wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 28px}
+.eyebrow{
+  font-family:var(--f-mono);font-size:11px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+}
+.rule{height:1px;background:var(--line-soft);border:0;margin:0}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0}
+section{padding:86px 0;border-top:1px solid var(--line-soft)}
+.sec-head{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;margin-bottom:34px}
+.sec-head h2{font-size:clamp(26px,3.4vw,38px);font-weight:700;letter-spacing:-.018em}
+.sec-head .eyebrow{margin-left:auto}
+
+/* ---------- nav ---------- */
+header.nav{
+  position:sticky;top:0;z-index:60;
+  background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line-soft);
+}
+.nav-in{display:flex;align-items:center;gap:26px;height:58px}
+.mark{font-family:var(--f-mono);font-size:12.5px;font-weight:600;letter-spacing:.06em;color:var(--ink)}
+.mark b{color:var(--led)}
+.nav-links{display:flex;gap:22px;margin-left:auto}
+.nav-links a{
+  font-family:var(--f-mono);font-size:11.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted);
+}
+.nav-links a:hover{color:var(--ink);text-decoration:none}
+.toggle{
+  background:transparent;border:1px solid var(--line);border-radius:var(--radius);
+  width:32px;height:28px;cursor:pointer;display:grid;place-items:center;
+  color:var(--ink-2);line-height:0;
+}
+.toggle:hover{border-color:var(--led);color:var(--led)}
+@media(max-width:720px){.nav-links{display:none}}
+
+/* ---------- hero ---------- */
+.hero{
+  border-top:0;padding:72px 0 70px;
+  background:
+    linear-gradient(180deg,var(--ground-2),var(--ground)),
+    repeating-linear-gradient(0deg,var(--grid) 0 1px,transparent 1px 56px),
+    repeating-linear-gradient(90deg,var(--grid) 0 1px,transparent 1px 56px);
+  background-blend-mode:normal;
+}
+.hero-grid{display:grid;grid-template-columns:224px minmax(0,1fr);gap:46px;align-items:center}
+.portrait{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:9px;box-shadow:var(--shadow)}
+.portrait .frame{position:relative;aspect-ratio:3/4;overflow:hidden;background:var(--ground-2);border-radius:2px}
+.portrait img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.portrait .ph{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:14px;background:repeating-linear-gradient(45deg,var(--line-soft) 0 1px,transparent 1px 9px),var(--ground-2)}
+.portrait .ph span{font-family:var(--f-mono);font-size:9.5px;line-height:1.8;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.portrait.empty img{display:none}
+.portrait.empty .ph{display:grid}
+.portrait figcaption{display:flex;justify-content:space-between;gap:8px;margin-top:9px;padding:0 2px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.hero h1{
+  font-size:clamp(29px,4.85vw,57px);font-weight:800;line-height:1.04;
+  letter-spacing:-.032em;margin:16px 0 0;
+}
+.hero h1 .sur{color:var(--led)}
+.hero .lede{
+  font-size:16px;line-height:1.85;color:var(--ink-2);
+  max-width:none;margin:24px 0 0;
+}
+.hero .lede-open{
+  font-size:23px;font-weight:700;line-height:1.42;
+  color:var(--ink);letter-spacing:-.016em;
+}
+@media(max-width:900px){
+  .hero .lede{font-size:15.5px;line-height:1.78}
+  .hero .lede-open{font-size:20px}
+}
+.hero-cta{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  padding:11px 18px;border-radius:var(--radius);border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);cursor:pointer;
+}
+.btn:hover{border-color:var(--led);color:var(--led);text-decoration:none}
+.btn.primary{background:var(--led);border-color:var(--led);color:#fff}
+.btn.primary:hover{background:var(--led-soft);border-color:var(--led-soft);color:#fff}
+
+/* matrix panel */
+.matrix-panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);
+}
+.matrix-panel canvas{width:100%;height:auto;display:block;background:#090C11;border-radius:2px}
+:root[data-theme="light"] .matrix-panel canvas{background:#16181C}
+.matrix-foot{
+  display:flex;justify-content:space-between;gap:12px;margin-top:14px;
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);
+}
+@media(max-width:860px){
+  .hero-grid{grid-template-columns:190px minmax(0,1fr);gap:34px}
+}
+@media(max-width:640px){
+  .hero-grid{grid-template-columns:1fr;gap:26px}
+  .portrait{max-width:206px}
+}
+
+/* ---------- spec strip ---------- */
+.specs{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--panel);overflow:hidden;margin-top:54px;
+}
+.spec{padding:18px 20px;border-left:1px solid var(--line-soft)}
+.spec:first-child{border-left:0}
+.spec dt{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.spec dd{
+  margin:6px 0 0;font-family:var(--f-display);font-size:24px;font-weight:700;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+}
+@media(max-width:680px){.specs{grid-template-columns:repeat(2,1fr)}.spec:nth-child(3){border-left:0}}
+
+/* ---------- skills ---------- */
+.bom{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.bom-col{background:var(--panel);border-left:1px solid var(--line-soft);padding:26px 24px 28px}
+.bom-col:first-child{border-left:0}
+.bom-tag{
+  display:inline-block;font-family:var(--f-mono);font-size:10.5px;font-weight:600;
+  letter-spacing:.16em;padding:3px 8px;border-radius:2px;margin-bottom:14px;
+}
+.bom-col[data-k="hw"] .bom-tag{color:var(--led);background:var(--led-ghost)}
+.bom-col[data-k="sw"] .bom-tag{color:var(--trace);background:color-mix(in srgb,var(--trace) 14%,transparent)}
+.bom-col[data-k="me"] .bom-tag{color:var(--solder);background:color-mix(in srgb,var(--solder) 16%,transparent)}
+.bom-col h3{font-size:19px;font-weight:700;letter-spacing:-.015em;margin-bottom:4px}
+.jot-sub{
+  font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);
+  margin:20px 0 9px;padding-top:13px;border-top:1px solid var(--line-soft);
+}
+.bom-col .jot-sub:first-of-type{margin-top:16px}
+.jots{list-style:none;margin:0;padding:0}
+.jots li{
+  position:relative;padding-left:15px;margin-bottom:6px;
+  font-size:13.5px;line-height:1.5;color:var(--ink-2);
+}
+.jots li:last-child{margin-bottom:0}
+.jots li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:1px;background:var(--muted)}
+.jots li b{color:var(--ink);font-weight:600}
+.bom-note{
+  margin:20px 0 0;padding:11px 12px;border:1px dashed var(--line);border-radius:2px;
+  font-family:var(--f-mono);font-size:11px;line-height:1.6;color:var(--muted);
+}
+@media(max-width:880px){.bom{grid-template-columns:1fr}.bom-col{border-left:0;border-top:1px solid var(--line-soft)}.bom-col:first-child{border-top:0}}
+
+/* ---------- filters ---------- */
+.view-switch{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+.view-switch button{
+  font-family:var(--f-mono);font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
+  padding:10px 18px;background:transparent;border:0;border-left:1px solid var(--line);
+  cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:8px;
+}
+.view-switch button:first-child{border-left:0}
+.view-switch button b{font-weight:600;font-size:10px;color:var(--muted);opacity:.7}
+.view-switch button:hover{color:var(--ink)}
+.view-switch button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:inset 0 -2px 0 var(--led)}
+.view-switch button[aria-pressed="true"] b{color:var(--led);opacity:1}
+.thumb img.cad-thumb{object-fit:contain;background:#fff;padding:6px}
+.filters[hidden]{display:none!important}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+.filters button{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  padding:7px 13px;border:1px solid var(--line);background:transparent;
+  border-radius:var(--radius);cursor:pointer;color:var(--muted);
+}
+.filters button:hover{color:var(--ink);border-color:var(--ink-2)}
+.filters button[aria-pressed="true"]{background:var(--led);border-color:var(--led);color:#fff}
+
+/* ---------- project grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:960px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.card{
+  display:flex;flex-direction:column;text-align:left;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:0;cursor:pointer;overflow:hidden;
+  transition:border-color .16s ease,transform .16s ease;
+}
+.card:hover{border-color:var(--led);transform:translateY(-2px)}
+.card:hover .card-code{color:var(--led)}
+.thumb{
+  position:relative;aspect-ratio:16/10;background:var(--ground-2);
+  border-bottom:1px solid var(--line-soft);overflow:hidden;
+}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb-ph{
+  width:100%;height:100%;display:grid;place-items:center;
+  background:
+    repeating-linear-gradient(45deg,var(--line-soft) 0 1px,transparent 1px 9px),
+    var(--ground-2);
+}
+.thumb-ph span{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.thumb img.dg-thumb{object-fit:contain;background:#fff;padding:8px}
+.badges{position:absolute;left:9px;bottom:9px;display:flex;gap:5px}
+.badge{
+  font-family:var(--f-mono);font-size:9.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 6px;border-radius:2px;
+  background:rgba(9,12,17,.82);color:#E4E9F0;backdrop-filter:blur(3px);
+}
+.badge.v{color:#fff;background:color-mix(in srgb,#FF4B2B 88%,#000)}
+.card-body{padding:16px 17px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.card-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.card-code{font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.12em;color:var(--muted)}
+.card-board{font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;color:var(--muted);text-align:right}
+.card h3{font-size:17px;font-weight:700;letter-spacing:-.016em;line-height:1.24}
+.card p{margin:0;font-size:13.5px;color:var(--ink-2);flex:1}
+.card-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px;
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.card-foot .open{color:var(--led)}
+
+/* ---------- contact ---------- */
+.contact-grid{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+.contact-r{display:flex;flex-direction:column}
+.clink{
+  display:flex;align-items:center;gap:14px;padding:17px 26px;
+  border-top:1px solid var(--line-soft);font-family:var(--f-mono);font-size:13px;color:var(--ink);
+}
+.contact-r .clink:first-child{border-top:0}
+.clink:hover{background:var(--panel-2);text-decoration:none;color:var(--led)}
+.clink .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);width:74px;flex:none}
+.clink.todo{color:var(--muted);cursor:default}
+.clink.todo:hover{background:transparent;color:var(--muted)}
+@media(max-width:520px){
+  .clink{flex-direction:column;align-items:flex-start;gap:3px;padding:14px 20px}
+  .clink .k{width:auto}
+}
+
+/* ---------- resume page ---------- */
+.res-wrap{max-width:820px;margin:0 auto;padding:60px 0 90px}
+.res-back{
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:38px;
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);
+}
+.res-back:hover{color:var(--led);text-decoration:none}
+.res-head{border-bottom:2px solid var(--led);padding-bottom:22px;margin-bottom:12px}
+.res-head h1{font-size:clamp(32px,5vw,46px);font-weight:800;letter-spacing:-.032em;line-height:1}
+.res-head .res-role{
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--led);margin:10px 0 0;
+}
+.res-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-family:var(--f-mono);font-size:12.5px;color:var(--ink-2)}
+.res-meta a{color:var(--ink-2)}
+.res-meta a:hover{color:var(--led)}
+.res-dl{
+  display:inline-flex;align-items:center;gap:8px;margin-top:20px;
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  padding:9px 15px;border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);
+}
+.res-dl:hover{border-color:var(--led);color:var(--led);text-decoration:none}
+.res-sec{padding-top:34px}
+.res-sec > .eyebrow{
+  display:block;padding-bottom:9px;margin-bottom:18px;border-bottom:1px solid var(--line);
+  color:var(--ink);letter-spacing:.18em;
+}
+.res-entry{margin-bottom:26px}
+.res-entry:last-child{margin-bottom:0}
+.res-row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.res-row h3{font-size:16.5px;font-weight:700;letter-spacing:-.012em}
+.res-date{
+  font-family:var(--f-mono);font-size:11.5px;color:var(--muted);white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.res-org{font-family:var(--f-mono);font-size:12px;color:var(--trace);margin:4px 0 9px}
+.res-list{list-style:none;margin:0;padding:0}
+.res-list li{position:relative;padding-left:16px;margin-bottom:6px;font-size:14px;line-height:1.55;color:var(--ink-2)}
+.res-list li:last-child{margin-bottom:0}
+.res-list li::before{content:"";position:absolute;left:0;top:.66em;width:7px;height:1px;background:var(--led)}
+.res-list li b{color:var(--ink);font-weight:600}
+.cert-list{display:grid;gap:0}
+.cert{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 0;border-bottom:1px solid var(--line-soft)}
+.cert:first-child{border-top:1px solid var(--line-soft)}
+.cert span:first-child{font-size:14px;color:var(--ink)}
+
+footer{padding:30px 0 48px;border-top:1px solid var(--line-soft)}
+.foot-in{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.backdrop{
+  position:fixed;inset:0;z-index:100;background:rgba(6,9,13,.78);
+  backdrop-filter:blur(5px);display:grid;place-items:center;padding:24px;
+}
+.backdrop[hidden]{display:none!important}
+.modal{
+  width:100%;max-width:1060px;max-height:92vh;display:flex;flex-direction:column;
+  background:var(--ground);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.m-head{display:flex;align-items:flex-start;gap:18px;padding:22px 24px 18px;border-bottom:1px solid var(--line-soft);background:var(--panel)}
+.m-head-txt{flex:1;min-width:0}
+.m-head .eyebrow{display:block;margin-bottom:7px}
+.m-head h2{font-size:clamp(21px,3vw,30px);font-weight:700;letter-spacing:-.022em;line-height:1.14}
+.m-head p{margin:8px 0 0;color:var(--ink-2);font-size:14px;max-width:70ch}
+.m-close{
+  flex:none;width:34px;height:34px;border:1px solid var(--line);background:transparent;
+  border-radius:var(--radius);cursor:pointer;color:var(--ink-2);font-size:17px;line-height:1;
+}
+.m-close:hover{border-color:var(--led);color:var(--led)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line-soft);background:var(--panel);overflow-x:auto}
+.tabs button{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  padding:13px 18px;background:transparent;border:0;border-bottom:2px solid transparent;
+  cursor:pointer;color:var(--muted);white-space:nowrap;
+}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--led);border-bottom-color:var(--led)}
+.m-body{padding:26px 24px 34px;overflow-y:auto;flex:1}
+.m-body h4{font-family:var(--f-display);font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0 0 8px}
+.m-body p{margin:0 0 15px;color:var(--ink-2);max-width:72ch}
+.m-body p.lead{font-size:15.5px;line-height:1.68;color:var(--ink)}
+.m-body p.body{line-height:1.66}
+.m-body p i{color:var(--ink)}
+.m-body p:last-child{margin-bottom:0}
+.m-body .eyebrow{display:block;margin:0 0 14px}
+
+.decisions{display:flex;flex-direction:column;gap:0;margin-top:6px;border-top:1px solid var(--line-soft)}
+.dec{display:grid;grid-template-columns:26px 1fr;gap:16px;padding:18px 0;border-bottom:1px solid var(--line-soft)}
+.dec .n{font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--led);padding-top:3px}
+.dec p{margin:6px 0 0;font-size:14px}
+
+.media-stack{display:flex;flex-direction:column;gap:24px}
+.media-item figcaption{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--muted);
+  margin-top:9px;display:flex;gap:8px;align-items:baseline;
+}
+.media-item figcaption b{color:var(--trace);font-weight:500;flex:none}
+.media-item img,.media-item video{width:100%;border:1px solid var(--line);border-radius:2px;background:#000}
+.media-note{
+  border:1px dashed var(--line);border-radius:2px;padding:14px 16px;
+  font-family:var(--f-mono);font-size:11.5px;line-height:1.65;color:var(--muted);
+}
+.media-note b{color:var(--ink-2);font-weight:500}
+
+.diagrams{display:flex;flex-direction:column;gap:22px;margin-bottom:30px}
+.diagram{margin:0}
+.dg-img{background:#fff;border:1px solid var(--line);border-radius:2px;padding:14px;overflow-x:auto;text-align:center}
+.dg-img img{display:inline-block;max-height:540px;width:auto;max-width:100%}
+.diagram figcaption{display:flex;gap:8px;align-items:baseline;margin-top:9px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.diagram figcaption b{color:var(--trace);font-weight:500;flex:none}
+.ref-link{display:inline-block;margin-top:14px;font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;color:var(--trace)}
+.pintable{width:100%;border-collapse:collapse;font-family:var(--f-mono);font-size:12.5px}
+.pintable th{
+  text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;padding:0 14px 9px 0;border-bottom:1px solid var(--line);
+}
+.pintable td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.pintable td:first-child{color:var(--led);font-weight:600;white-space:nowrap}
+.pintable td:nth-child(2){color:var(--ink)}
+.pintable td:last-child{color:var(--muted);font-family:var(--f-body);font-size:13px}
+.tbl-scroll{overflow-x:auto;margin-bottom:22px}
+
+.file-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.file-tabs button{
+  font-family:var(--f-mono);font-size:11px;padding:6px 11px;border:1px solid var(--line);
+  background:transparent;border-radius:2px;cursor:pointer;color:var(--muted);
+}
+.file-tabs button[aria-pressed="true"]{border-color:var(--led);color:var(--led);background:var(--led-ghost)}
+pre.code{
+  margin:0;background:var(--ground-2);border:1px solid var(--line);border-radius:2px;
+  padding:18px 20px;overflow-x:auto;font-family:var(--f-mono);font-size:12.5px;line-height:1.66;
+  color:var(--ink-2);max-height:58vh;overflow-y:auto;
+}
+.t-com{color:var(--muted);font-style:italic}
+.t-str{color:var(--solder)}
+.t-pre{color:var(--led-soft)}
+.t-num{color:var(--trace)}
+.t-key{color:var(--led);font-weight:600}
+.t-fn{color:var(--ink)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <span class="mark">MIHOCAS<b>/</b>HARDWARE-LOG</span>
+    <nav class="nav-links">
+      <a href="#skills">About Me</a>
+      <a href="#builds">My Projects</a>
+      <a href="#resume">Resume</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="toggle" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+        <circle cx="8" cy="8" r="3.4"></circle>
+        <path d="M8 .9v1.8M8 13.3v1.8M.9 8h1.8M13.3 8h1.8M3 3l1.3 1.3M11.7 11.7L13 13M13 3l-1.3 1.3M4.3 11.7L3 13"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main>
+<div id="pageHome">
+  <!-- ================= HERO ================= -->
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div class="hero-grid">
+        <figure class="portrait" id="portrait">
+          <div class="frame">
+            <img src="assets/img/headshot.jpg" alt="Jonathan Mihocas"
+                 onerror="document.getElementById(&quot;portrait&quot;).classList.add(&quot;empty&quot;)">
+            <div class="ph"><span>Headshot<br>assets/img/<br>headshot.jpg</span></div>
+          </div>
+          <figcaption><span>J. Mihocas</span><span>Guelph</span></figcaption>
+        </figure>
+
+        <div>
+          <span class="eyebrow">Electrical &middot; Embedded &middot; Mechanical</span>
+          <h1>Jonathan <span class="sur">Mihocas</span></h1>
+          <p class="lede"><span class="lede-open">My name is Jonathan Mihocas, I’m a Mechatronics Engineering co-op student at the University of Guelph.</span> I am passionate about the intersection of mechanical design, electronics, control systems, and I love working on complex ideas through hands-on prototyping and 3D modeling. Whether I am tackling design challenges in my coursework, collaborating on technical reports, or competing in Engineering Competitions, I am driven by a relentless curiosity to solve problems. Beyond engineering, I hold a DELF diploma in French, play acoustic guitar for community events, and stay active through competitive sports. I believe that the discipline, teamwork, and creativity I've developed are the key to making me a more versatile and innovative engineer.</p>
+
+          <div class="hero-cta">
+            <a class="btn primary" href="#builds">Browse my projects</a>
+            <a class="btn" href="#contact">Get in touch</a>
+          </div>
+        </div>
+
+      </div>
+
+      <dl class="specs">
+        <div class="spec"><dt>Projects Documented</dt><dd>23</dd></div>
+        <div class="spec"><dt>Arduino Sketches</dt><dd>16</dd></div>
+        <div class="spec"><dt>Video Demos</dt><dd>9</dd></div>
+        <div class="spec"><dt>Sensors Interfaced</dt><dd>4</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ================= SKILLS ================= -->
+  <section id="skills">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>About Me</h2>
+        <span class="eyebrow">Bill of capabilities</span>
+      </div>
+
+      <div class="bom">
+        <div class="bom-col" data-k="hw">
+          <span class="bom-tag">HW</span>
+          <h3>Hardware</h3>
+
+          <p class="jot-sub">Circuits</p>
+          <ul class="jots">
+            <li>Breadboard prototyping: analog and digital</li>
+            <li>Voltage dividers, current limiting, pull-up / pull-down</li>
+            <li>H-bridge motor driver wiring</li>
+            <li>Through-hole soldering</li>
+            <li>Separate motor and logic supplies</li>
+          </ul>
+
+          <p class="jot-sub">Sensors</p>
+          <ul class="jots">
+            <li><b>HC-SR04</b>: ultrasonic ranging, echo pulse timing</li>
+            <li><b>DHT11</b>: temperature, humidity, heat index</li>
+            <li><b>PIR</b>: motion detection, thermal calibration</li>
+            <li><b>Photoresistor</b>: light level via divider</li>
+            <li>Potentiometers, momentary switches</li>
+          </ul>
+
+          <p class="jot-sub">Output &amp; actuation</p>
+          <ul class="jots">
+            <li>Hobby servos: angle control, detach when idle</li>
+            <li>Brushed DC motors: differential drive</li>
+            <li>RGB LEDs: per-channel PWM trim</li>
+            <li>DAC sine synthesis for audio</li>
+          </ul>
+        </div>
+
+        <div class="bom-col" data-k="sw">
+          <span class="bom-tag">SW</span>
+          <h3>Software</h3>
+
+          <p class="jot-sub">C / C++</p>
+          <ul class="jots">
+            <li>Arrays, pointers, fixed-width types</li>
+            <li>Functions, scope, const correctness</li>
+            <li>2D byte framebuffers</li>
+            <li>Preprocessor macros and header files</li>
+            <li>Serial string parsing and validation</li>
+          </ul>
+
+          <p class="jot-sub">Embedded systems</p>
+          <ul class="jots">
+            <li>GPIO, PWM, 10-bit ADC</li>
+            <li>Button edge detection and debounce</li>
+            <li>Multi-sample averaging to reject noise</li>
+            <li>Non-blocking timing and loop pacing</li>
+            <li>UART / serial debug instrumentation</li>
+            <li>Arduino UNO R3 and UNO R4 WiFi</li>
+          </ul>
+
+          <p class="jot-sub">Tooling</p>
+          <ul class="jots">
+            <li>Arduino IDE, serial monitor and plotter</li>
+            <li>Third-party library integration</li>
+            <li>Git version control</li>
+          </ul>
+        </div>
+
+        <div class="bom-col" data-k="me">
+          <span class="bom-tag">ME</span>
+          <h3>Mechanical</h3>
+
+          <p class="jot-sub">SOLIDWORKS</p>
+          <ul class="jots">
+            <li>Part modelling: extrudes, revolves, fillets</li>
+            <li>Assemblies and mates</li>
+            <li>Drawing sheets and title blocks</li>
+            <li>Sheet metal basics</li>
+          </ul>
+
+          <p class="jot-sub">AutoCAD</p>
+          <ul class="jots">
+            <li>2D drafting and dimensioning</li>
+            <li>Layers, blocks, templates</li>
+            <li>Orthographic and section views</li>
+          </ul>
+
+          <p class="jot-sub">Fabrication</p>
+          <ul class="jots">
+            <li>Tolerance and fit for printed parts</li>
+            <li>3D-print design for manufacture</li>
+            <li>Servo and sensor mounting</li>
+            <li>Hand and power tools</li>
+          </ul>
+
+          <p class="bom-note">
+            CAD slot: drop SOLIDWORKS / AutoCAD exports into<br>
+            <b>Portfolio&nbsp;Site/assets/cad/</b> and they can be added as a
+            Drawings tab on any build.
+          </p>
+        </div>
+      </div>    </div>
+  </section>
+
+  <!-- ================= BUILDS ================= -->
+  <section id="builds">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>My Projects</h2>
+        <span class="eyebrow">Click any card for the full write-up</span>
+      </div>
+      <div class="view-switch" id="viewSwitch" role="group" aria-label="Choose a discipline">
+        <button type="button" data-view="electronics" aria-pressed="true">Electronics <b>12</b></button>
+        <button type="button" data-view="cad" aria-pressed="false">SOLIDWORKS <b>10</b></button>
+        <button type="button" data-view="software" aria-pressed="false">Software <b>1</b></button>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Filter builds by function"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Contact</h2>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-r">
+          <a class="clink" href="mailto:jmihocas@uoguelph.ca">
+            <span class="k">Email</span><span>jmihocas@uoguelph.ca</span>
+          </a>
+          <a class="clink" href="https://www.linkedin.com/in/jonathan-mihocas-719173392" target="_blank" rel="noopener">
+            <span class="k">LinkedIn</span><span>jonathan-mihocas</span>
+          </a>
+          <a class="clink" href="#resume">
+            <span class="k">Resume</span><span>View full resume &rarr;</span>
+          </a>
+          <span class="clink todo"><span class="k">GitHub</span><span>Pending</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /pageHome -->
+<!-- ================= RESUME PAGE ================= -->
+<div id="pageResume" hidden>
+  <div class="wrap res-wrap">
+    <a class="res-back" href="#top">&larr; Back to portfolio</a>
+
+    <header class="res-head">
+      <h1>Jonathan Mihocas</h1>
+      <p class="res-role">Mechatronics Engineering (Co-op) &middot; University of Guelph</p>
+      <div class="res-meta">
+        <span>Kitchener, ON</span>
+        <a href="tel:+15197293313">(519) 729-3313</a>
+        <a href="mailto:jmihocas@uoguelph.ca">jmihocas@uoguelph.ca</a>
+        <a href="https://www.linkedin.com/in/jonathan-mihocas-719173392" target="_blank" rel="noopener">linkedin.com/in/jonathan-mihocas</a>
+      </div>
+      <!--LOCALONLY-->
+      <a class="res-dl" href="assets/Jonathan-Mihocas-Resume.pdf" target="_blank" rel="noopener">Download PDF &darr;</a>
+      <!--/LOCALONLY-->
+    </header>
+
+    <section class="res-sec">
+      <span class="eyebrow">Skills Overview</span>
+      <ul class="res-list">
+        <li>Proficient in <b>2D drafting and 3D modelling</b> using AutoCAD and SOLIDWORKS, developed through academic coursework and personal projects.</li>
+        <li>Intermediate knowledge of <b>C programming</b> and Microsoft Office applications including Excel, with a strong aptitude for rapidly learning new technical software.</li>
+        <li>Proven commitment to high safety and quality standards, demonstrated through rigorous equipment checks and adherence to protocols in fast-paced environments.</li>
+        <li>Excellent communication and collaboration skills, working effectively within diverse teams to coordinate tasks, resolve issues and achieve daily targets.</li>
+        <li>Strong time management and adaptability, balancing rigorous engineering coursework with personal projects and employment.</li>
+        <li>Fluent in <b>English, French and Romanian</b>.</li>
+      </ul>
+    </section>
+
+    <section class="res-sec">
+      <span class="eyebrow">Education</span>
+
+      <div class="res-entry">
+        <div class="res-row">
+          <h3>Bachelor of Engineering, Mechatronics Engineering (Co-op)</h3>
+          <span class="res-date">Sept 2025 &ndash; Present</span>
+        </div>
+        <p class="res-org">University of Guelph &middot; Guelph, ON</p>
+        <ul class="res-list">
+          <li>Awarded the <b>University of Guelph Entrance Scholarship</b> with an admission average of 94%.</li>
+          <li>Recognised on the <b>Dean's List</b> (83% average) while managing a 56-hour weekly academic workload.</li>
+          <li>Relevant courses: Engineering Mechanics (82%), Engineering Analysis (87%), Material Science (82%).</li>
+        </ul>
+      </div>
+
+      <div class="res-entry">
+        <div class="res-row">
+          <h3>Ontario Secondary School Diploma</h3>
+          <span class="res-date">Sept 2021 &ndash; June 2025</span>
+        </div>
+        <p class="res-org">Forest Heights Collegiate Institute &middot; Kitchener, ON</p>
+        <ul class="res-list">
+          <li><b>Ministry of Education Ontario Scholar</b>, with a Grade 12 average well above 80%.</li>
+          <li>Honour Roll for academic excellence, December 2021 through May 2025.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="res-sec">
+      <span class="eyebrow">Engineering Projects</span>
+
+      <div class="res-entry">
+        <div class="res-row">
+          <h3>Automated Mechatronic Vehicle</h3>
+          <span class="res-date">Sept 2025 &ndash; Dec 2025</span>
+        </div>
+        <p class="res-org">University of Guelph &middot; Guelph, ON</p>
+        <ul class="res-list">
+          <li>Designed and assembled a mechatronic control system using an Arduino microcontroller, breadboards and custom wiring to automate vehicle movement.</li>
+          <li>Constructed a robust chassis and structural frame from a Meccano kit, ensuring mechanical stability for wheels, axles and internal components.</li>
+          <li>Produced technical drawings of the electrical system and vehicle architecture in <b>AutoCAD</b> for precise assembly and documentation.</li>
+          <li>Collaborated with teammates to troubleshoot system integration issues, delivering a fully functional prototype that met all design specifications.</li>
+        </ul>
+      </div>
+
+      <div class="res-entry">
+        <div class="res-row">
+          <h3>AI-Integrated Software Development Project</h3>
+          <span class="res-date">Sept 2025 &ndash; Dec 2025</span>
+        </div>
+        <p class="res-org">University of Guelph &middot; Guelph, ON</p>
+        <ul class="res-list">
+          <li>Implemented a full Tic-Tac-Toe application in <b>C</b>, with both player-versus-player and player-versus-computer modes.</li>
+          <li>Built a scalable game architecture supporting grid sizes from 3&times;3 to 10&times;10.</li>
+          <li>Programmed the computer opponent's decision-making using algorithmic strategies to optimise competitive play.</li>
+          <li>Used self-directed learning to pick up new programming methodologies and troubleshooting techniques for a clean interface and error-free execution.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="res-sec">
+      <span class="eyebrow">Work Experience</span>
+
+      <div class="res-entry">
+        <div class="res-row">
+          <h3>Slide Attendant</h3>
+          <span class="res-date">June 2025 &ndash; Sept 2025</span>
+        </div>
+        <p class="res-org">Bingemans Inc. &middot; Kitchener, ON</p>
+        <ul class="res-list">
+          <li>Performed routine safety and equipment checks on facility assets, prioritising quality and hazard prevention for all guests.</li>
+          <li>Worked alongside lifeguards and staff in a fast-paced environment, keeping daily operations efficient and resolving patron concerns quickly.</li>
+          <li>Communicated safety protocols clearly to high volumes of daily visitors, minimising incident rates.</li>
+        </ul>
+      </div>
+
+      <div class="res-entry">
+        <div class="res-row">
+          <h3>Housekeeping Specialist</h3>
+          <span class="res-date">June 2024 &ndash; Sept 2024</span>
+        </div>
+        <p class="res-org">Muskoka Bible Centre &middot; Huntsville, ON</p>
+        <ul class="res-list">
+          <li>Completed multiple daily facility assignments within strict deadlines, consistently meeting organisational targets.</li>
+          <li>Tracked inventory levels and safely handled chemical cleaning supplies in line with workplace safety protocols.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="res-sec">
+      <span class="eyebrow">Volunteer Experience</span>
+      <div class="res-entry">
+        <div class="res-row">
+          <h3>Maintenance Volunteer</h3>
+          <span class="res-date">June 2024 &ndash; Sept 2024</span>
+        </div>
+        <p class="res-org">Muskoka Bible Centre &middot; Huntsville, ON</p>
+        <ul class="res-list">
+          <li>Carried out routine repairs and preventative maintenance with a small team, using a variety of hand tools to troubleshoot mechanical issues and minimise equipment downtime.</li>
+          <li>Conducted safety and functionality inspections on communal equipment, resolving hazards quickly to keep the campground secure and operational.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="res-sec">
+      <span class="eyebrow">Training &amp; Certifications</span>
+      <div class="cert-list">
+        <div class="cert"><span>SOLIDWORKS Design Associate (CSWA)</span><span class="res-date">May 2026</span></div>
+        <div class="cert"><span>WHMIS</span><span class="res-date">Sept 2025</span></div>
+        <div class="cert"><span>Standard First Aid &amp; Basic Rescuer CPR Level C, Canadian Red Cross (active)</span><span class="res-date">April 2025</span></div>
+        <div class="cert"><span>Active Bystander Training, Mennonite Central Committee</span><span class="res-date">Jan 2024</span></div>
+      </div>
+    </section>
+  </div>
+</div>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <span>Jonathan Mihocas &middot; hardware log</span>
+    <span>Built by hand: HTML &middot; CSS &middot; JS</span>
+  </div>
+</footer>
+
+<div class="backdrop" id="backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="m-head">
+      <div class="m-head-txt">
+        <span class="eyebrow" id="mCode"></span>
+        <h2 id="mTitle"></h2>
+        <p id="mBlurb"></p>
+      </div>
+      <button class="m-close" id="mClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="tabs" id="mTabs" role="tablist"></div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MEDIA_MODE
+   "local"  → videos stream from ../Portfolio Projects/ (run this
+              file from Documents/Portfolio Site/)
+   "cloud"  → published build; images are embedded, videos are
+              named but not shipped (they are ~300 MB).
+   ============================================================ */
+var MEDIA_MODE = "local";
+
+var IMG = "assets/img/";
+function imgSrc(n){ return IMG + n + ".jpg"; }
+var CIRC = "assets/circuits/";
+function circSrc(n){ return CIRC + n + ".png"; }
+var CADP = "assets/cad/";
+function cadSrc(n){ return CADP + n + ".jpg"; }
+var VID = "assets/video/";
+
+/* ---------- code sources (injected from the real .ino files) ---------- */
+var CODE = {
+"tictactoe": `#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#include <conio.h>
+#include <string.h>
+
+#define MAX_SIZE 10 // Maximum grid size
+int procentage_of_win=0;//used by ai to determine the posibility of x to win
+int ffsize,ffai,ffr,ffx,ff0;
+char fboard[MAX_SIZE][MAX_SIZE];
+
+//structure used to save data in a file
+typedef struct  { 
+    int size;
+    int humam_ai;
+    int rnd;
+    int scorex;
+    int score0;
+    char table[MAX_SIZE][MAX_SIZE];
+}file_struct;
+//function used to save data
+int save_file(char table1[MAX_SIZE][MAX_SIZE], int size1, int hum_ai, char nam[15],int r,int sx,int s0)
+{
+    FILE *my_file;
+    file_struct t;
+    int i,j;
+    
+    t.size=size1;
+    t.humam_ai=hum_ai;
+    t.rnd=r;
+    t.scorex=sx;
+    t.score0=s0;
+     for(i=0;i<size1;i++)
+        for(j=0;j<size1;j++)t.table[i][j]=table1[i][j];
+    remove(nam); //deletes the file ussually tictock.dat; further version should ask for a new file when saving or opening
+    my_file = fopen(nam, "wb");//wb opens file to write in binary mode
+
+    if (my_file == NULL) {
+                            perror("Error opening file");
+                            return 1; // Indicate an error
+                            }
+    
+    
+     fwrite(&t, sizeof( file_struct), 1, my_file);
+       
+    fclose(my_file);
+    return 0;
+}
+
+
+ //initialize the board  
+void initializeBoard(char board[MAX_SIZE][MAX_SIZE], int size,int r,int x_score,int y_score)
+{             
+	int i1,j1;
+
+	printf("\\n");
+	for(j1=0; j1<size; j1++)printf("   %d",j1+1);
+	printf("\\n");
+
+	for(i1=0; i1<size; i1++)
+	{
+		printf("%d|",i1+1);
+
+		for(j1=0; j1<size; j1++)
+		{
+			board[i1][j1]=' ';
+			printf("---|");
+		}
+		if(i1==0) printf("       ROUND:%d         X: %d         Y:%d",r,x_score,y_score);
+		printf("\\n");
+	}
+
+}
+
+// function that prints the board, points of x, point for 0 and the score
+void printBoard(char board[MAX_SIZE][MAX_SIZE], int size1,int r,int x_score,int y_score)
+{       //function is call everytime a move is made
+	int i1,j1;
+
+	printf("\\n");
+	for(j1=0; j1<size1; j1++)printf("   %d",j1+1);
+	printf("\\n");
+
+	for(i1=0; i1<size1; i1++)
+	{
+		printf("%d|",i1+1);
+
+		for(j1=0; j1<size1; j1++)
+		{
+			printf("-");
+			if(board[i1][j1]=='x')
+			{
+				printf("\\033[32m"); //set color green for x
+			}
+			else if (board[i1][j1]=='0')
+				printf("\\033[33m"); //set color yellow for y
+			else
+				printf("\\033[0m"); //reset colot to default white
+
+			printf("%c",board[i1][j1]);
+			printf("\\033[0m"); //reset colot to default white
+			printf("-|");
+		}
+		if(i1==0) printf("       ROUND:%d         X: %d         Y:%d",r,x_score,y_score);
+		printf("\\n");
+	}
+	return;
+}
+
+//check if a win has been reach for x or 0 on each line,column and diagonals
+int checkWin(char board[MAX_SIZE][MAX_SIZE], int size)
+{
+	int val_to_returned=-1,i1,j1;   //return -1 is draw
+	char compared_char;             //return 1 if x win    
+                                    //return 2 if x win
+	// checks win for each line;
+	int win_foundl;
+	i1=0;
+	do       //initilize for each line
+	{
+		compared_char=board[i1][0];
+		if(compared_char!=' ')
+		{
+			win_foundl=1;// assume we have a winner at the beggining of each line
+
+			for(j1=0; j1<size; j1++)
+				if(compared_char!=board[i1][j1]) win_foundl=0;
+		} else
+			win_foundl=0;
+		i1++;
+	} while ((i1<size)&&(win_foundl==0));
+
+	if(win_foundl==1)
+	{
+		if (compared_char=='x') val_to_returned=1;
+		else
+			val_to_returned=2;
+		return val_to_returned;
+	}
+
+
+	//checks for win on each column;
+	int win_foundc;
+	j1=0;
+	do       //initilize for each line
+	{
+		compared_char=board[0][j1];
+		if(compared_char!=' ')
+		{
+			win_foundc=1;// assume we have a winner at the beggining of each column
+
+			for(i1=0; i1<size; i1++)
+				if(compared_char!=board[i1][j1]) win_foundc=0;
+		} else
+			win_foundc=0;
+		j1++;
+	} while ((j1<size)&&(win_foundc==0));
+
+	if(win_foundc==1)
+	{
+		if (compared_char=='x') val_to_returned=1;
+		else
+			val_to_returned=2;
+		return val_to_returned;
+	}
+
+
+	//check win on diagonal 1;
+	int win_foundd1;
+	i1=0;
+	j1=0;
+	compared_char=board[i1][j1];
+	win_foundd1=1;// assume we have a winner at the beggining of diagonal
+	do
+	{
+		if(compared_char!=' ')
+		{
+			if(compared_char!=board[i1][j1]) win_foundd1=0;
+		} else
+			win_foundd1=0;
+
+		i1++;
+		j1++;
+	} while (i1<size);
+
+	if(win_foundd1==1)
+	{
+		if (compared_char=='x') val_to_returned=1;
+		else
+			val_to_returned=2;
+		return val_to_returned;
+	}
+	
+	//check for win on diagonal 2;
+	int win_foundd2;
+	i1=0;
+    //j1=size;
+		j1=size-1;
+	compared_char=board[i1][j1];
+	
+	win_foundd2=1;// assume we have a winner at the beggining of diagonal
+	do
+	{
+		if(compared_char!=' ')
+		{
+			if(compared_char!=board[i1][j1]) win_foundd2=0;
+		} else
+			win_foundd2=0;
+
+		i1++;
+		j1--;
+	} while (i1<size);
+
+	if(win_foundd2==1)
+	{
+		if (compared_char=='x') val_to_returned=1;
+		else
+			val_to_returned=2;
+			
+		return val_to_returned;
+	}
+
+	//return no winnner
+	if((win_foundc==0)&&(win_foundl==0)&&(win_foundd1==0)&&(win_foundd2==0))
+	{
+		val_to_returned=-1;
+		return val_to_returned;
+	}
+
+}
+
+//function called for human vs human play
+void playerMove(char table[MAX_SIZE][MAX_SIZE], int size,int newgame)  // function called if human to human is selected
+{	int win,player=1,total_val; //total_val no of x and 0 togheter
+	int runda=1,scorex=0,score0=0,h_m;
+	int i,j,line, col,execcode;
+	char inputchar,ch,save_and_quit;
+	char file_name[15];
+    
+	do {
+		win=-1;// no winner! will have a winner when win=1 or win=0;
+		    if (newgame==0)
+		            {  player=1;
+		                 initializeBoard(table,size,runda,scorex,score0);
+		                    total_val=0;
+		            } 
+		 if (newgame==1) 
+		 {     
+		      printf ("                   Previosely saved game!   ");
+		      int total_x_saved=0,total_0_saved=0;
+		        for(i=0;i<size;i++)
+		            for(j=0;j<size;j++)
+		            {
+		                if (table[i][j]=='x') total_x_saved++;
+		                if (table[i][j]=='0') total_0_saved++;
+		            }
+		       
+		        //determine player no
+		        
+		        if (total_x_saved<=total_0_saved) player=1;
+		        else player=2;
+		        //determine total x and zero;
+		        total_val=total_x_saved+total_0_saved;
+		        //printf("totalval %d",total_val);
+		 }
+		do
+		{
+		    
+			printf("\\nTo quit enter negative numbers!\\n\\nLine Column player %d :",player);
+			scanf("%d %d",&line,&col);
+
+			fflush(stdin);
+
+			if ((line>=1)&&(line<=size)&&(col>=1)&&(col<=size))
+			{
+				if (table[line-1][col-1]==' ')
+				{
+					if(player==1)
+					{
+						inputchar='x';
+						player=2;
+					} else
+					{
+						inputchar='0';
+						player=1;
+					}
+
+
+					table[line-1][col-1]=inputchar;
+					printBoard(table,size,runda,scorex,score0);
+					win= checkWin(table,size);
+					total_val++;
+				}
+				else printf("\\nBox taken!");
+			}
+
+		} while((line>=0)&&(col>=0)&&(total_val!=size*size)&&(win==-1));
+		
+            //printf("\\ntotal val%d ",total_val );
+          
+		if(win!=-1)
+		    {	printf("\\n WINNER %d!!!",win);
+		        	if(win==1) scorex++;
+		        	else score0++;
+	    	}
+		    printBoard(table,size,runda,scorex,score0);
+		
+		        if ( line>=0 && col>=0)
+		          {
+		            if(win==-1) printf("\\nNO WINNER/NO POINTS!!!");
+
+		            printf("\\nNew game?... (Press 'q' and Enter to exit)");
+
+	        	    while (getchar() != '\\n' && getchar() != EOF); // Clears the input buffer
+		            fflush(stdin);
+		            ch=getchar();
+		            //printf("You press %c!",ch);
+		            if (ch != 'q' && ch != 'Q') newgame=0;
+		            runda++;
+		          }
+	} while (ch != 'q' && ch != 'Q'&& line>=0 && col>=0);
+	if ( line<0 || col<0)
+	{   
+	    char a;
+	    printf("Do you want to save? Y/N");
+	    while (getchar() != '\\n' && getchar() != EOF); // Clears the input buffer
+		fflush(stdin);
+		a=getchar(); 
+		printf("  You selected %c", a);
+	    if((a=='y')||(a=='Y'))
+	        {
+	            printf("Saving...\\n");
+	            strcpy(file_name,"ticktock.dat");
+	            h_m=0;
+	            execcode=save_file( table,  size, h_m, file_name,runda,scorex,score0);
+	        }
+	}
+	return;
+}
+
+// function called to decide ai defend or attack
+int ai_defend_attack(char table[MAX_SIZE][MAX_SIZE], int size1,char c) //c could be x or 0
+{
+	int i,j,no_of_x_0,no_of_x_0_final,ret_val;
+	int no_of_l_c_d; //stores the line or column or diagonal where the highes posibility of winning exist
+	int filledboxes;
+	
+	procentage_of_win=0;
+	//test the posibility of winning on one of the lines
+		no_of_x_0_final=0;
+
+	for(i=0; i<size1; i++)
+	{
+	    filledboxes=0;
+		no_of_x_0=0;
+		for(j=0; j<size1; j++)
+		{
+			if(table[i][j]==c) no_of_x_0++;
+            	if(table[i][j]!=' ')filledboxes++;
+		}
+		if((no_of_x_0>no_of_x_0_final) && (filledboxes<size1))
+		{
+			no_of_x_0_final=no_of_x_0;
+			no_of_l_c_d=i;
+		}
+	}
+	        procentage_of_win = (no_of_x_0_final*100/size1);//no_of_x_0_final stores bieggest value of either x or 0, which one theres is more of on a line or column
+	        ret_val = 100 + no_of_l_c_d; //returning code 100 plus the line on which might be a win
+	   
+	 	//test the posibility of winning on one of the columns
+	no_of_x_0_final=0;
+	
+	for(j=0; j<size1; j++)
+	{
+	    filledboxes=0;
+		no_of_x_0=0;
+		for(i=0; i<size1; i++)
+		{
+			if(table[i][j]==c) no_of_x_0++;
+			if(table[i][j]!=' ')filledboxes++;
+		}
+		
+		if((no_of_x_0>no_of_x_0_final)&&(filledboxes<size1))
+		{
+			no_of_x_0_final=no_of_x_0;
+			no_of_l_c_d=j;
+		}
+	}
+	  
+	    if(no_of_x_0_final*100/size1>procentage_of_win)
+	    {
+	    	procentage_of_win=no_of_x_0_final*100/size1;//Threat Calculation t count how many x or 0 are in a line.
+	    	ret_val=200+no_of_l_c_d; //returning code 200 plus the column on which might be a win
+	    }
+
+
+	//test the posibility of winning on one of the diagonal 1
+	filledboxes=0;
+	no_of_x_0_final=0;
+	i=0;
+	j=0;
+	do
+	{
+		if(table[i][j]==c)no_of_x_0_final++;
+		if(table[i][j]!=' ')filledboxes++;
+		i++;
+		j++;
+	} while(i<size1);
+
+	if((no_of_x_0_final*100/size1>procentage_of_win)&&(filledboxes<size1))
+	{
+		procentage_of_win=no_of_x_0_final*100/size1;
+		ret_val=301; //retur code 301  posible win on diagonal 1
+	}
+
+	//test the posibility of winning on one of the diagonal 2
+	filledboxes=0;
+	no_of_x_0_final=0;
+	i=0;
+	j=size1;
+	do
+	{
+		if(table[i][j]==c)no_of_x_0_final++;
+			if(table[i][j]!=' ')filledboxes++;
+		i++;
+		j--;
+	} while(i<size1);
+	
+	if((no_of_x_0_final*100/size1>procentage_of_win)&&(filledboxes<size1))
+	{
+		procentage_of_win=no_of_x_0_final*100/size1;
+		ret_val=302; //returning code 302  posible win on diagonal 2
+	}
+//printf("\\n ai_defend_attack ret val %c   %d",c,ret_val);
+	return ret_val;
+}
+
+
+//function called on human vs AI play
+void aiMove(char table[MAX_SIZE][MAX_SIZE], int size1, int newgame)
+{ //function calle for human against ai
+
+	int win,player=1,total_val;
+	int runda=1,scorex=0,score0=0;
+	int line, col,ratio;
+	int ai_result; 
+	int ai_attack; //store the evaluation for 0
+	int ai_defend;//store the evaluation for x
+	char inputchar,ch,x0;
+	int i,j,retv,procentage_of_win_0;
+
+	do {
+		  
+	    	if (newgame==0)
+		            {  player=1;
+		                 initializeBoard(table,size1,runda,scorex,score0);
+		                    total_val=0;
+		            } 
+		 if (newgame==1) 
+		 {     
+		      printf ("             Previosely saved  game!");
+		      int total_x_saved=0,total_0_saved=0;
+		        for(i=0;i<size1;i++)
+		            for(j=0;j<size1;j++)
+		            {
+		                if (table[i][j]=='x') total_x_saved++;
+		                if (table[i][j]=='0') total_0_saved++;
+		            }
+		       
+		        //determine player no
+		        if (total_x_saved<=total_0_saved) player=1;
+		        else player=2;
+		        //determine total x and zero;
+		        total_val=total_x_saved+total_0_saved;
+		 }
+		    do
+		    {
+    			printf("\\nLine  Column player %d :",player);
+    			if (player==1) //player 1 is always human x imput
+			    {	printf("    To save and exit enter netative numbers!   ");
+				    scanf("%d %d",&line,&col);
+				    fflush(stdin);
+				    
+			    }
+			    else
+			    {     //ai defends or attacks
+                    
+			        x0='0';
+				    ai_attack=ai_defend_attack(table,size1,x0);
+			        procentage_of_win_0=procentage_of_win;
+			       // printf("\\n0 probability %d",procentage_of_win_0);
+			        
+			        x0='x';
+				    ai_defend= ai_defend_attack(table,size1,x0);
+				   // printf("\\nx probability %d",procentage_of_win);
+				    
+			       	ratio=100/size1;
+				    
+				    if( procentage_of_win<=ratio)
+					        // generate line and colum beetwen 1 and size of the grid
+				    {	do
+					    {
+						    line =  rand() % (size1-1) ;
+						    col= rand() % (size1-1) ;
+					     } while ((table[line][col]=='x')||(table[line][col]=='0'));
+					    
+				    }
+				    else
+				    { 
+					   if (procentage_of_win_0>=65) //level of dificulty can be change here
+					        ai_result=ai_attack;
+					   else
+					        ai_result=ai_defend;
+					    
+					    retv=ai_result/100;
+					    i=0;
+					    j=0;
+                        
+                        //decode the returning code of function ai_defend_attack
+					    if (retv==1) 
+				        	{	line=ai_result%100;//here i get the line number
+					    	j=-1;
+					    	    do {j++;} while ((table[line][j]!=' ')&&(j<size1)&&(j<size1));
+						    col=j;
+					        }
+
+					   if (retv==2)
+					        {	col=ai_result%200;//i get the column number
+						        i=-1;
+						        do
+						            {
+						            	i++;
+						             } while ((table[i][col]!=' ')&&(i<size1)&&(j<size1));
+						        line=i;
+					        }
+
+					   if (retv==3)
+					        {
+						        if(ai_result%300==1)
+						            {	//diagonala 1;
+						            	i=-1;
+						                j=-1;
+							            do
+							            {
+								            i++;
+							            	j++;
+							            } while ((table[i][j]!=' ')&&(i<size1)&&(j<size1));
+							                line=i;
+							                col=j;
+						            }
+					        	if(ai_result%300==2)
+					            	{	//diagonala 2;
+						            	i=-1;
+						            	j=size1;
+						            	do
+						            	{
+							            	i++;
+							            	j--;
+							            } while((table[i][j]!=' ')&&(i<size1));
+							                line=i;
+							                col=j;
+						            } 
+				        	} 
+
+				        }
+				printf ("\\nAI x: %d   AI y:%d",line+1, col+1);
+			
+			    }//else for player ==1;
+			    
+			     if(player==1)
+			    {   
+			        if ((line>=0)&&(col>=0))
+				        {         //inputchar='x';
+			    	              //  player=2;
+				                if(table[line-1][col-1]==' ')
+				                {   inputchar='x';
+			    	                player=2;
+			    		            table[line-1][col-1]=inputchar;
+			    		            printBoard(table,size1,runda,scorex,score0);
+				                    win= checkWin(table,size1);
+			    		            total_val++;
+				                }
+				                else printf("Box taken!!");
+				        }
+			    	
+			    }
+                else
+			    	{
+				        inputchar='0';
+				        player=1;
+				        if(table[line][col]==' ')
+				            {
+				   	               table[line][col]=inputchar;
+				   	               printBoard(table,size1,runda,scorex,score0);
+				                    win= checkWin(table,size1);
+					               total_val++;
+			    	        } else printf("Box taken!!");
+			        }
+
+			   } while((line>=0)&&(col>=0)&&(total_val!=size1*size1)&&(win==-1));
+            
+            
+		if((line>=0)&&(col>=0))
+		  {          if(win!=-1)
+		            {	printf("\\nWINNER %d!!!",win);
+		            	if(win==1) scorex++;
+	            		else score0++;
+		            }
+		            printBoard(table,size1,runda,scorex,score0);//function call to update the score
+		
+		            if(win==-1) printf("\\nNO WINNER/NO POINTS!!!");
+
+		            printf("New Game?... (Press 'q' and Enter to exit)");
+
+		            while (getchar() != '\\n' && getchar() != EOF); // Clears the input buffer
+		            fflush(stdin);
+		            ch=getchar();
+		            //printf("You press %c!",ch);
+		            if (ch != 'q' && ch != 'Q') newgame=0;
+		            runda++;
+		  }
+	} while ((ch != 'q' && ch != 'Q')&&(line>=0)&&(col>=0));
+	
+	if ((line<0)||(col<0))
+	{   
+	    int h_m=1,execcode;
+	    char file_name[15], a;
+	    printf(" Do you want to save save? Y/N ");
+	    while (getchar() != '\\n' && getchar() != EOF); // Clears the input buffer
+		fflush(stdin);
+		            a=getchar();
+		            printf("  You selected %c", a);
+	    if ((a=='y') || (a=='Y'))
+	        {
+	            printf("Saving...\\n");
+	            strcpy(file_name,"ticktock.dat");
+	            execcode=save_file( table,  size1, h_m, file_name,runda,scorex,score0);
+	        }
+	}
+	return ;
+
+}
+
+
+int open_file(char table1[MAX_SIZE][MAX_SIZE], int size, int hum_ai, char nam[15])
+{
+    FILE *my_file;
+     file_struct t;
+    int i,j;
+
+    my_file = fopen("ticktock.dat", "r"); // Open in binary read mode
+    if (my_file == NULL) {
+                             perror("Error opening file");
+                              return 1;
+                         }
+    
+   
+    fread(&t , sizeof(file_struct),1,my_file);
+    ffsize=t.size;
+    ffai= t.humam_ai;
+    ffr=t.rnd;
+    ffx=t.scorex;
+    ff0=t.score0;
+     //printf("size in open file %d",ffsize); 
+        for(i=0;i<ffsize;i++)
+              for(j=0;j<ffsize;j++) fboard[i][j]=t.table[i][j];
+          
+        printf("DONE reading!\\n");
+     fclose(my_file);
+}
+
+//small menu option _ialization
+int init_menu(int value)
+{   int h_m,new_game;
+    int gsize,s;
+    int i,j;
+	int modeai;
+	int execcode;
+	char file_name[15];
+	char table1[MAX_SIZE][MAX_SIZE];
+	int runda,scorex,score0;
+	strcpy(file_name,"ticktock.dat");
+	 
+    if (value==1)//for new game
+	      {  
+	            do
+	                {	printf("\\nGrid size ");
+		            scanf("%d",&gsize);
+                	//gsize=4;
+		            if((gsize<3)||(gsize>10)) printf(" Size must be >=3 <=10");
+	                } while ((gsize<3)||(gsize>10));
+    	            fflush(stdin);
+
+
+	                printf("1: AI Mode \\n2: Human \\nPress 1 or another key!...and ENTER ");
+	                scanf("%d",&modeai);
+	
+                    //modeai=1;
+	                if(modeai==1)
+	                {
+	                	printf("        AI mode selected!\\n");
+		                srand(time(NULL));
+		                int newgame=0;
+		                aiMove(table1,gsize,newgame);
+	                }
+	                else
+                	{
+		                printf("        Human opponent selected!\\n");
+		                new_game=0;
+		                playerMove(table1,gsize,new_game);
+	                }
+	      }//init =0int gsize;
+	
+	if(value==2)// for game loaded from file
+            
+            {
+                execcode=open_file( table1,  s, h_m, file_name);
+               // printf("size : %d    ai:%d\\n", ffsize, ffai);
+                for(i=0;i<ffsize;i++) for(j=0;j<ffsize;j++)table1[i][j]=fboard[i][j];
+               
+                    runda=ffr;scorex=ffx;score0=ff0;
+                    printBoard(table1,ffsize,runda,scorex,score0);
+                    if (ffai==0)//human player saved
+                    {
+                         printf("        Human opponent selected!\\n");
+                         new_game=1;
+                         gsize=ffsize;
+		                playerMove(table1,gsize,new_game);
+                    }
+                    if (ffai==1) //ai player saved
+                    {
+                         printf("        AI opponent selected!\\n");
+                         new_game=1;
+                         gsize=ffsize;
+		                aiMove(table1,gsize,new_game);
+                    }
+                    //call the function for playerMove or aimove
+            }
+}
+
+int main()
+{	int gsize,v;
+	int modeai,init_ret_val;
+	char table1[MAX_SIZE][MAX_SIZE];
+
+		printf("                TIC-TOCK\\n");
+	do 
+   { printf("\\n\\n1. New game\\n2. Load Game\\n3. Exit\\nSelect an option ");
+    scanf("%d",&v);
+    init_ret_val=init_menu(v);
+   }while(v!=3) ;
+ 	return 0;
+}`,
+"smart-trash": `#include <Servo.h>
+
+Servo servo;
+int servoPin = 9;
+int openAngle = 0;
+int closeAngle =180;
+
+int trigPin = 5;
+int echoPin = 6;
+long distance, averageDistance;
+long averDist[3];
+
+int distanceThreshold = 20;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  servo.attach(servoPin);
+  servo.write(closeAngle);
+  delay(100);
+  servo.detach();  
+}
+
+void loop() {
+  //Measure the distance three times
+  for (int i = 0; i <= 2; i++) {
+    distance = readDistance();
+    averDist[i] = distance;
+    delay(10);
+  }
+
+  //Calculate the average distance
+  averageDistance = (averDist[0] + averDist[1] + averDist[2]) / 3;
+  Serial.print("Distance: ");
+  Serial.print(averageDistance);
+  Serial.println(" cm");
+
+  if (averageDistance <= distanceThreshold) {
+    Serial.print(">>> Object detected at ");
+    Serial.print(averageDistance);
+    Serial.println(" cm. Lis is Opened.");
+    servo.attach(servoPin);  
+    delay(1);
+    servo.write(openAngle);  
+    delay(2000);
+  } else {
+    Serial.println(">>> Lid is Closed.");
+    servo.write(closeAngle);  
+    delay(1000);
+    servo.detach();  
+  }
+  Serial.println("  ");
+}
+
+float readDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  float distance = pulseIn(echoPin, HIGH) / 58.00;  
+  return distance;
+}`,
+"pong-bounce": `#include "Arduino_LED_Matrix.h"
+ArduinoLEDMatrix matrix;
+
+int br = 115200;
+int dt = 50;
+int xPos = 3;//Specifying intial column position
+int yPos = 2;//Specifying intial row position 
+int deltaX = 1;//Specifying how much the pixel will jump in the column diretion
+int deltaY = 1;//Sepcifying how much the pixel will jump in the column direction
+int i = 0;
+int j = 0;
+
+byte frame[8][12];
+
+void setup() {
+  Serial.begin(br);
+  matrix.begin();
+}
+
+void loop() {
+  for(i=0; i<=11; i++){
+    for(j=0; j<=8; j++){
+      frame[j][i] = 0;//Here we set every pixel equal to zero
+      if((i == xPos) && (j == yPos)){
+        frame[j][i] = 1;
+      }
+    }
+  }
+
+  matrix.renderBitmap(frame, 8, 12);
+  if((xPos >= 11) || (xPos <=0)){
+    deltaX = -deltaX;
+  }
+
+  if((yPos >= 7) || (yPos <=0)){
+    deltaY = -deltaY;
+  }
+
+  xPos = xPos + deltaX;
+  yPos = yPos + deltaY;
+  delay(dt);
+}`,
+"pong-v1": `#include "Arduino_LED_Matrix.h"
+ArduinoLEDMatrix matrix;
+
+int br = 115200;
+int dt = 250;
+int xPos = 3;//Specifying intial column position
+int yPos = 2;//Specifying intial row position 
+int deltaX = 1;//Specifying how much the pixel will jump in the column diretion
+int deltaY = 1;//Sepcifying how much the pixel will jump in the column direction
+int i = 0;
+int j = 0;
+
+int yellow_butPin = 12;
+int blue_butPin = 11;
+int myRow = 4;
+int yellow_butval;
+int blue_butval;
+int rowInc = 1;
+int cnt = 0;
+
+byte frame[8][12];
+
+void setup() {
+  Serial.begin(br);
+  matrix.begin();
+  pinMode(yellow_butPin, INPUT_PULLUP);
+  pinMode(blue_butPin, INPUT_PULLUP);
+}
+
+void loop() {
+  yellow_butval = digitalRead(yellow_butPin);
+  blue_butval = digitalRead(blue_butPin);
+
+  if(yellow_butval == 0){
+    myRow = myRow + rowInc;
+  }
+  if(blue_butval == 0){
+    myRow = myRow - rowInc;
+  }
+
+  if(cnt%2 == 0){
+
+    for(i=0; i<=11; i++){
+      for(j=0; j<=8; j++){
+        frame[j][i] = 0;//Here we set every pixel equal to zero
+
+      if((i == xPos) && (j == yPos)){
+        frame[j][i] = 1;
+      }
+
+      if((i == 0) && (j == myRow)){
+        frame[j][i] = 1;
+      }
+    }
+  }
+
+    matrix.renderBitmap(frame, 8, 12);
+    if((xPos >= 11) || (xPos <=0)){
+      deltaX = -deltaX;
+    }
+
+    if((yPos >= 7) || (yPos <=0)){
+      deltaY = -deltaY;
+    }
+
+    if((xPos == 0) && (yPos != myRow)){
+      Serial.println(" !!!GAME OVER!!! ");
+      delay(5000);
+    }
+
+    xPos = xPos + deltaX;
+    yPos = yPos + deltaY;
+  }
+
+  delay(dt);
+}`,
+"pong-v2": `#include "Arduino_LED_Matrix.h"
+ArduinoLEDMatrix matrix;
+
+int br = 115200;
+int dt = 250;
+int xPos = 3;  // Specifying intial column position
+int yPos = 2;  // Specifying intial row position 
+int deltaX = 1; // Specifying how much the pixel will jump in the column direction
+int deltaY = 1; // Specifying how much the pixel will jump in the row direction
+int i = 0;
+int j = 0;
+
+int yellow_butPin = 12;
+int blue_butPin = 11;
+int myRow = 4; // Center pixel of the paddle
+int yellow_butval;
+int blue_butval;
+int rowInc = 1;
+int cnt = 0;
+
+byte frame[8][12];
+
+void setup() {
+  Serial.begin(br);
+  matrix.begin();
+  pinMode(yellow_butPin, INPUT_PULLUP);
+  pinMode(blue_butPin, INPUT_PULLUP);
+}
+
+void loop() {
+  yellow_butval = digitalRead(yellow_butPin);
+  blue_butval = digitalRead(blue_butPin);
+
+  // Paddle movement and boundary constraints
+  if(yellow_butval == 0){
+    myRow = myRow + rowInc;
+    if(myRow > 6) myRow = 6; 
+  }
+  if(blue_butval == 0){
+    myRow = myRow - rowInc;
+    if(myRow < 1) myRow = 1;
+  }
+
+  if(cnt%2 == 0){
+
+    for(i=0; i<=11; i++){
+      for(j=0; j<=8; j++){
+        frame[j][i] = 0; // Here we set every pixel equal to zero
+
+        // Draw the ball
+        if((i == xPos) && (j == yPos)){
+          frame[j][i] = 1;
+        }
+
+        // Draw the 3-pixel paddle
+        if((i == 0) && (j >= myRow - 1) && (j <= myRow + 1)){
+          frame[j][i] = 1;
+        }
+      }
+    }
+
+    matrix.renderBitmap(frame, 8, 12);
+    
+    // Ball bouncing off left/right walls
+    if((xPos >= 11) || (xPos <= 0)){
+      deltaX = -deltaX;
+    }
+
+    // Ball bouncing off top/bottom walls
+    if((yPos >= 7) || (yPos <= 0)){
+      deltaY = -deltaY;
+    }
+
+    // Collision detection: Game Over if ball reaches column 0 but misses the 3-pixel paddle
+    if((xPos == 0) && ((yPos < myRow - 1) || (yPos > myRow + 1))){
+      Serial.println(" !!!GAME OVER!!! ");
+      delay(5000);
+      
+      // Optional: Reset ball position after game over
+      xPos = 3; 
+      yPos = 2;
+    }
+
+    xPos = xPos + deltaX;
+    yPos = yPos + deltaY;
+  }
+
+  delay(dt);
+}`,
+"dht11": `#include <DHT.h>
+#define DHTPIN A0//Specifying which pin the DHT sensor is connected to. Must use analog pin for some reason
+#define DHTTYPE DHT11//specifying which DHT sensor we are using
+DHT dht(DHTPIN, DHTTYPE);
+
+#include "ArduinoGraphics.h"
+#include "Arduino_LED_Matrix.h"
+ArduinoLEDMatrix matrix;
+
+int butpin = 10;
+int butval = 1;//1 means button is up, not pressed
+int butvalold = 1;
+
+int br = 115200;
+int setUpDelay = 2000;//need to put a set up delay for the sensor to calibrate
+int measDelay = 2000;//Need to put a measurement delay so that the sensor can read accuartely
+
+float tempC;
+float tempF;
+float hum;
+float HIF;//Heat Index in farenheit
+float HIC;//Heat Index in Celcius 
+
+String message;
+
+void setup() {
+  Serial.begin(br);
+  dht.begin();//gets the dht sensor started
+  pinMode(butpin, INPUT_PULLUP);
+  matrix.begin();
+  delay(setUpDelay);
+}
+
+void loop() {
+  butval = digitalRead(butpin);
+  if((butval == 0) && (butvalold == 1)){//if button is pressed and then not pressed, then...
+
+    tempC = dht.readTemperature();
+    tempF = dht.readTemperature(true);
+    hum = dht.readHumidity();
+
+    if((isnan(tempC)) || (isnan(tempF)) || (isnan(hum))){//here we check wether get any bad readings, and breakout of the program is we do
+      Serial.println("FAILED to read data");
+      return;
+    }
+
+    HIC = dht.computeHeatIndex(tempC, hum, false);
+    HIF = dht.computeHeatIndex(tempF, hum, true);
+    message = "Temp: " + String(tempC) + "°C" + "/" + String(tempF) + "°F" + "   Humidity: " + String(hum) + "%" +  "   Heat Index: " + String(HIC) + "°C/" + String(HIF) + "°F";
+    Serial.println(message);
+
+    matrix.beginDraw();
+    matrix.textScrollSpeed(75);
+    matrix.textFont(Font_5x7);
+    matrix.beginText(0, 1, 255, 0, 0);
+    matrix.println(message);
+    matrix.endText(SCROLL_LEFT);
+    matrix.endDraw();
+  
+    // Serial.print("Temp: ");
+    // Serial.print(tempC);
+    // Serial.print("°C");
+    // Serial.print("/");
+    // Serial.print(tempF);
+    // Serial.print("°F");
+    // Serial.print("   Humidity: ");
+    // Serial.print(hum);
+    // Serial.print("%");
+    // Serial.print("   Heat Index: ");
+    // Serial.print(HIC);
+    // Serial.print("°C");
+    // Serial.print("/");
+    // Serial.print(HIF);
+    // Serial.println("°F");
+    delay(measDelay);
+  }
+  butvalold = butval;
+}`,
+"doorbell-v2": `#define NOTE_B0  31
+#define NOTE_C1  33
+#define NOTE_CS1 35
+#define NOTE_D1  37
+#define NOTE_DS1 39
+#define NOTE_E1  41
+#define NOTE_F1  44
+#define NOTE_FS1 46
+#define NOTE_G1  49
+#define NOTE_GS1 52
+#define NOTE_A1  55
+#define NOTE_AS1 58
+#define NOTE_B1  62
+#define NOTE_C2  65
+#define NOTE_CS2 69
+#define NOTE_D2  73
+#define NOTE_DS2 78
+#define NOTE_E2  82
+#define NOTE_F2  87
+#define NOTE_FS2 93
+#define NOTE_G2  98
+#define NOTE_GS2 104
+#define NOTE_A2  110
+#define NOTE_AS2 117
+#define NOTE_B2  123
+#define NOTE_C3  131
+#define NOTE_CS3 139
+#define NOTE_D3  147
+#define NOTE_DS3 156
+#define NOTE_E3  165
+#define NOTE_F3  175
+#define NOTE_FS3 185
+#define NOTE_G3  196
+#define NOTE_GS3 208
+#define NOTE_A3  220
+#define NOTE_AS3 233
+#define NOTE_B3  247
+#define NOTE_C4  262
+#define NOTE_CS4 277
+#define NOTE_D4  294
+#define NOTE_DS4 311
+#define NOTE_E4  330
+#define NOTE_F4  349
+#define NOTE_FS4 370
+#define NOTE_G4  392
+#define NOTE_GS4 415
+#define NOTE_A4  440
+#define NOTE_AS4 466
+#define NOTE_B4  494
+#define NOTE_C5  523
+#define NOTE_CS5 554
+#define NOTE_D5  587
+#define NOTE_DS5 622
+#define NOTE_E5  659
+#define NOTE_F5  698
+#define NOTE_FS5 740
+#define NOTE_G5  784
+#define NOTE_GS5 831
+#define NOTE_A5  880
+#define NOTE_AS5 932
+#define NOTE_B5  988
+#define NOTE_C6  1047
+#define NOTE_CS6 1109
+#define NOTE_D6  1175
+#define NOTE_DS6 1245
+#define NOTE_E6  1319
+#define NOTE_F6  1397
+#define NOTE_FS6 1480
+#define NOTE_G6  1568
+#define NOTE_GS6 1661
+#define NOTE_A6  1760
+#define NOTE_AS6 1865
+#define NOTE_B6  1976
+#define NOTE_C7  2093
+#define NOTE_CS7 2217
+#define NOTE_D7  2349
+#define NOTE_DS7 2489
+#define NOTE_E7  2637
+#define NOTE_F7  2794
+#define NOTE_FS7 2960
+#define NOTE_G7  3136
+#define NOTE_GS7 3322
+#define NOTE_A7  3520
+#define NOTE_AS7 3729
+#define NOTE_B7  3951
+#define NOTE_C8  4186
+#define NOTE_CS8 4435
+#define NOTE_D8  4699
+#define NOTE_DS8 4978
+#define REST      0
+
+#include "analogWave.h"
+
+analogWave wave(DAC);
+
+#define sensorPin 8
+
+// Note and duration pairs
+int melody[] = {NOTE_C4, 4, NOTE_E4, 4, NOTE_G4, 4, NOTE_C5, 4, NOTE_G4, 4, NOTE_E4, 4, NOTE_C4, 4};
+
+int bpm = 60;
+// beatDuration in milliseconds
+float beatDuration = (60.0 / bpm) * 1000; 
+
+int sensorValue;
+int br = 9600;
+int dt = 5000;
+
+void setup() {
+  Serial.begin(br);
+  pinMode(sensorPin, INPUT);
+  
+  // Allow PIR sensor to stabilize and take a baseline IR reading
+  Serial.println("Calibrating PIR sensor... please wait 10 seconds.");
+  delay(10000);
+  Serial.println("System Ready!");
+}
+
+void loop() {
+  sensorValue = digitalRead(sensorPin);
+  Serial.println(sensorValue);
+
+  if (sensorValue == HIGH) {
+    playMelody();
+    delay(dt); // Wait 5 seconds before allowing another trigger
+  }
+  
+  delay(100); // Small stability delay to prevent serial flooding
+}
+
+void playMelody() {
+  // Calculate total elements once, outside the loop
+  int totalElements = sizeof(melody) / sizeof(melody[0]);
+
+  // Step through the array in pairs of 2
+  for (int i = 0; i < totalElements; i += 2) {
+    int currentNote = melody[i];
+    int divider = melody[i + 1];
+    int noteDuration = 0;
+
+    // Calculate duration
+    if (divider > 0) {
+      noteDuration = beatDuration / divider;
+    } else if (divider < 0) {
+      noteDuration = beatDuration / abs(divider);
+      noteDuration *= 1.5; // Handle dotted notes (negative numbers)
+    }
+
+    // Play the note
+    if (currentNote == 0) { 
+      wave.stop();
+    } else {
+      wave.sine(currentNote); 
+    }
+
+    // Hold the note for 85% of its duration
+    delay(noteDuration * 0.85);
+    
+    // Stop the wave to create a small gap (articulation) between notes
+    wave.stop();
+    
+    // Rest for the remaining 15% of the duration
+    delay(noteDuration * 0.15);
+  }
+}`,
+"doorbell-v1": `#include "analogWave.h"
+#include "pitches.h"
+
+analogWave wave(DAC);
+
+#define sensorPin 8
+
+int melody[]{NOTE_C4, 4, NOTE_E4, 4, NOTE_G4, 4, NOTE_C5, 4, NOTE_G4, 4, NOTE_E4, 4, NOTE_C4, 4};
+int noteCounter = 0;
+int totalNotes;
+int bpm = 60;
+float beatDuration = 60.0/bpm * 1000;
+int divider = 0; 
+int noteDuration = 0;
+int sensorValue;
+int br = 9600;
+int dt = 5000;
+
+void setup(){
+  Serial.begin(br);
+  pinMode(sensorPin, INPUT);
+  wave.sine(10);
+
+  wave.amplitude(4095);
+}
+
+void loop(){
+  sensorValue = digitalRead(sensorPin);
+  Serial.println(sensorValue);
+
+  if(sensorValue == HIGH){
+    playMelody();
+    delay(dt);
+  }
+}
+
+void playMelody(){
+  while(1){
+    // Look ahead to the next index for the duration, without changing noteCounter yet
+    divider = melody[noteCounter + 1];
+
+    if(divider > 0){
+      noteDuration = beatDuration/divider;
+    }
+    else if(divider < 0){
+      noteDuration = beatDuration / abs(divider);
+      noteDuration *= 1.5;
+    }
+
+    // Play the pitch at the current index
+    wave.freq(melody[noteCounter]);
+    delay(noteDuration * 0.85);
+    wave.stop();
+
+    delay(noteDuration * 0.15);
+
+    // Now safely increment by 2 to move to the next Pitch/Duration pair
+    noteCounter += 2;
+
+    totalNotes = sizeof(melody)/sizeof(melody[0]);
+    noteCounter = noteCounter % totalNotes;
+
+    if(noteCounter == 0){
+      break;
+    }
+  }
+}`,
+"doorbell-pitches": `#define NOTE_B0  31
+#define NOTE_C1  33
+#define NOTE_CS1 35
+#define NOTE_D1  37
+#define NOTE_DS1 39
+#define NOTE_E1  41
+#define NOTE_F1  44
+#define NOTE_FS1 46
+#define NOTE_G1  49
+#define NOTE_GS1 52
+#define NOTE_A1  55
+#define NOTE_AS1 58
+#define NOTE_B1  62
+#define NOTE_C2  65
+#define NOTE_CS2 69
+#define NOTE_D2  73
+#define NOTE_DS2 78
+#define NOTE_E2  82
+#define NOTE_F2  87
+#define NOTE_FS2 93
+#define NOTE_G2  98
+#define NOTE_GS2 104
+#define NOTE_A2  110
+#define NOTE_AS2 117
+#define NOTE_B2  123
+#define NOTE_C3  131
+#define NOTE_CS3 139
+#define NOTE_D3  147
+#define NOTE_DS3 156
+#define NOTE_E3  165
+#define NOTE_F3  175
+#define NOTE_FS3 185
+#define NOTE_G3  196
+#define NOTE_GS3 208
+#define NOTE_A3  220
+#define NOTE_AS3 233
+#define NOTE_B3  247
+#define NOTE_C4  262
+#define NOTE_CS4 277
+#define NOTE_D4  294
+#define NOTE_DS4 311
+#define NOTE_E4  330
+#define NOTE_F4  349
+#define NOTE_FS4 370
+#define NOTE_G4  392
+#define NOTE_GS4 415
+#define NOTE_A4  440
+#define NOTE_AS4 466
+#define NOTE_B4  494
+#define NOTE_C5  523
+#define NOTE_CS5 554
+#define NOTE_D5  587
+#define NOTE_DS5 622
+#define NOTE_E5  659
+#define NOTE_F5  698
+#define NOTE_FS5 740
+#define NOTE_G5  784
+#define NOTE_GS5 831
+#define NOTE_A5  880
+#define NOTE_AS5 932
+#define NOTE_B5  988
+#define NOTE_C6  1047
+#define NOTE_CS6 1109
+#define NOTE_D6  1175
+#define NOTE_DS6 1245
+#define NOTE_E6  1319
+#define NOTE_F6  1397
+#define NOTE_FS6 1480
+#define NOTE_G6  1568
+#define NOTE_GS6 1661
+#define NOTE_A6  1760
+#define NOTE_AS6 1865
+#define NOTE_B6  1976
+#define NOTE_C7  2093
+#define NOTE_CS7 2217
+#define NOTE_D7  2349
+#define NOTE_DS7 2489
+#define NOTE_E7  2637
+#define NOTE_F7  2794
+#define NOTE_FS7 2960
+#define NOTE_G7  3136
+#define NOTE_GS7 3322
+#define NOTE_A7  3520
+#define NOTE_AS7 3729
+#define NOTE_B7  3951
+#define NOTE_C8  4186
+#define NOTE_CS8 4435
+#define NOTE_D8  4699
+#define NOTE_DS8 4978
+#define REST      0`,
+"light-array": `const int NbrLEDs = 8;
+const int ledPins[] = { 5, 6, 7, 8, 9, 10, 11, 12 };
+
+const int photocellPin = A0;
+
+int sensorValue = 0;  
+int ledLevel = 0;     
+
+void setup() {
+  for (int led = 0; led < NbrLEDs; led++) {
+    pinMode(ledPins[led], OUTPUT);
+  }
+}
+
+void loop() {
+  sensorValue = analogRead(photocellPin);              
+  ledLevel = map(sensorValue, 300, 1023, 0, NbrLEDs);  
+
+  for (int led = 0; led < NbrLEDs; led++) {
+    if (led < ledLevel) {
+      digitalWrite(ledPins[led], HIGH);  
+    } else {
+      digitalWrite(ledPins[led], LOW); 
+    }
+  }
+}`,
+"smart-car": `const int A_1B = 5;
+const int A_1A = 6;
+const int B_1B = 9;
+const int B_1A = 10;
+
+  void setup() {
+    pinMode(A_1B, OUTPUT);
+    pinMode(A_1A, OUTPUT);
+    pinMode(B_1B, OUTPUT);
+    pinMode(B_1A, OUTPUT);
+  }
+
+  void loop() {
+    moveForward();
+    delay(2000);
+    stopMove();
+    delay(500);
+
+    moveBackward();
+    delay(2000);
+    stopMove();
+    delay(500);
+
+    turnLeft();
+    delay(2000);
+    stopMove();
+    delay(500);
+
+    turnRight();
+    delay(2000);
+    stopMove();
+    delay(500);
+  }
+
+  void moveForward() {
+    digitalWrite(A_1B, LOW);
+    digitalWrite(A_1A, HIGH);
+    digitalWrite(B_1B, HIGH);
+    digitalWrite(B_1A, LOW);
+  }
+
+  void moveBackward() {
+    digitalWrite(A_1B, HIGH);
+    digitalWrite(A_1A, LOW);
+    digitalWrite(B_1B, LOW);
+    digitalWrite(B_1A, HIGH);
+  }
+
+  void turnRight() {
+    digitalWrite(A_1B, HIGH);
+    digitalWrite(A_1A, LOW);
+    digitalWrite(B_1B, HIGH);
+    digitalWrite(B_1A, LOW);
+  }
+
+  void turnLeft() {
+    digitalWrite(A_1B, LOW);
+    digitalWrite(A_1A, HIGH);
+    digitalWrite(B_1B, LOW);
+    digitalWrite(B_1A, HIGH);
+  }
+
+  void stopMove() {
+    digitalWrite(A_1B, LOW);
+    digitalWrite(A_1A, LOW);
+    digitalWrite(B_1B, LOW);
+    digitalWrite(B_1A, LOW);
+  }`,
+"servo-pot": `#include <Servo.h>
+int br = 115200;
+int servopin = 9;
+int potpin = A2;
+int servo_angle = 0;
+int potval;//value we read from the potentiometer
+int dt = 50;
+Servo myServo;
+
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(br);
+  myServo.attach(servopin);
+  pinMode(potpin, INPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  potval = analogRead(potpin);
+  servo_angle = (-180.0/1023.0) * potval + 180.0;
+  Serial.println(servo_angle);
+  myServo.write(servo_angle);
+  delay(dt);
+}`,
+"led-pot": `int potenVal;
+int potenPin = A0;
+int redPin = 9;
+int readinRate = 9600;
+float volts;
+int ledBrightness;
+int dl = 100;
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(potenPin, INPUT);
+  pinMode(redPin, OUTPUT);
+  Serial.begin(readinRate);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  potenVal = analogRead(potenPin);
+  volts = potenVal * (5.0/1023.0);
+
+  ledBrightness = map(potenVal, 0, 1023, 0, 255);//convert from the value(0 to 1023) that the potentiometer can accept to represent voltage, to a value (0 to 255) the LED would accept as an input for voltage
+
+  analogWrite(redPin, ledBrightness);//Here we tell the red LED the amount of voltage we are giving it based on the amount of voltage being allowed by the potentiometer
+
+  Serial.print("Voltage being read: ");
+  Serial.print(volts);
+  Serial.println(" V");
+
+  delay(dl);
+}`,
+"analog-led": `int redPin = 9;
+int potpin = A0;
+int potval;
+int writeval;
+int waitT = 100;
+int reedrate = 9600;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(reedrate);
+  pinMode(redPin, OUTPUT);
+  pinMode(potpin, INPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  potval = analogRead(potpin);//analogread allows us to read the voltage value at the pin at which the potentiometer is connected
+
+  //writeval = (255.0/1023.0) * potval;//equation to convert from potentiometer voltage reading to light bulb voltage reading
+  writeval = pow(2, potval/127.875) - 1;
+  analogWrite(redPin, writeval);//telling the LED pin how much volatge it is gettin. analogWrite(where you are writting, what we are writting)
+
+  Serial.print(potval);
+  Serial.print("   ");
+  Serial.println(writeval);
+}`,
+"rgb-mixer": `int redpin = 9;
+int greenpin = 10;
+int bluepin = 11;
+int br = 115200;
+String askprompt = "What color would you like? Choose from red, green, blue, cyan, magenta, yellow, orange or white! OR turn the LED OFF";
+String user_color;
+
+void setup() {
+  Serial.begin(br);
+  pinMode(redpin, OUTPUT);
+  pinMode(greenpin, OUTPUT);
+  pinMode(bluepin, OUTPUT);
+}
+
+void loop() {
+  Serial.println(askprompt);
+  while(Serial.available() == 0){
+  }
+  user_color = Serial.readString();
+  user_color.toLowerCase();
+
+  if(user_color == "red"){
+    analogWrite(redpin, 255);//we can use analog write to have a more accurate brightness for the LED
+    analogWrite(greenpin, 0);
+    analogWrite(bluepin, 0);
+    Serial.println("Color Red chosen");
+  }
+
+  if(user_color == "green"){
+    analogWrite(greenpin, 255);
+    analogWrite(redpin, 0);
+    analogWrite(bluepin, 0);
+    Serial.println("Color Green chosen");
+  }
+
+  if(user_color == "blue"){
+    analogWrite(bluepin, 255);
+    analogWrite(redpin, 0);
+    analogWrite(greenpin, 0);
+    Serial.println("Color Blue chosen");
+  }
+
+  if(user_color == "cyan"){
+    analogWrite(bluepin, 255);
+    analogWrite(greenpin, 255);
+    analogWrite(redpin, 0);
+    Serial.println("Cyan color chosen");
+  }
+
+  if(user_color == "magenta"){
+    analogWrite(bluepin, 50);
+    analogWrite(redpin, 255);
+    analogWrite(greenpin, 0);
+    Serial.println("Magenta color chosen");
+  }
+
+  if(user_color == "yellow"){
+    analogWrite(redpin, 255);
+    analogWrite(greenpin, 25);
+    analogWrite(bluepin, 0);
+    Serial.println("Color Yellow chosen");
+  }
+
+  if(user_color == "orange"){
+    analogWrite(redpin, 220);
+    analogWrite(greenpin, 12);
+    analogWrite(bluepin, 0);
+    Serial.println("Color Orange chosen");
+  }
+
+  if(user_color == "white"){
+    analogWrite(redpin, 255);
+    analogWrite(greenpin, 100);
+    analogWrite(bluepin, 120);
+    Serial.println("Color White chosen");
+  }
+
+  if(user_color == "off"){
+    analogWrite(redpin, 0);
+    analogWrite(greenpin, 0);
+    analogWrite(bluepin, 0);
+  }
+
+  Serial.println("  ");
+}`,
+"rgb-blink": `int redpin = 9;
+int greenpin = 10;
+int bluepin = 11;
+int br = 115200;
+int i;
+int shortD = 150;
+int longD = 1000;
+String myprompt = "Enter the ammout of blinks";
+int user_blinks;
+
+void setup() {
+  Serial.begin(br);
+  pinMode(redpin, OUTPUT);
+  pinMode(greenpin, OUTPUT);
+  pinMode(bluepin, OUTPUT);
+}
+
+void loop() {
+  Serial.println(myprompt);
+  while(Serial.available() == 0){
+  }
+  user_blinks = Serial.parseInt();
+
+  for(i = 1; i<=user_blinks; i++){
+    analogWrite(redpin, 255);
+    analogWrite(greenpin, 0);
+    analogWrite(bluepin, 0);
+    delay(shortD);
+
+    analogWrite(greenpin, 255);
+    analogWrite(redpin, 0);
+    analogWrite(bluepin, 0);
+    delay(shortD);
+
+    analogWrite(bluepin, 255);
+    analogWrite(greenpin, 0);
+    analogWrite(redpin, 0);
+    delay(shortD);
+
+    delay(longD);
+    Serial.println(i);
+  }
+
+  analogWrite(redpin, 0);
+  analogWrite(greenpin, 0);
+  analogWrite(bluepin, 0);
+  Serial.println("  ");
+
+  while(Serial.available() == 0){
+  }
+}`,
+"matrix-text": `#include "ArduinoGraphics.h"
+#include "Arduino_LED_Matrix.h"
+ArduinoLEDMatrix matrix;
+
+String message = "Jonathan Mihocas";
+int br = 115200;
+
+void setup() {
+  Serial.begin(br);
+  matrix.begin();//Initializing matrix
+}
+
+void loop() {
+  matrix.beginDraw();//here we tell the matrix we are going to draw smth on it
+  matrix.textScrollSpeed(50);
+  matrix.textFont(Font_5x7);//here we tell specify what size font we want out text to be, either 5x7(max font) or 4x6(smallest font)
+  matrix.beginText(0,1, 255, 0, 0);//matrix.beginText(column, row(cant be zero), 255(for red), 0(for green cause there is none), 0(for blue, cause there is none))
+  matrix.println(message);//specify what message we print
+  matrix.endText(SCROLL_LEFT);//End the text. When we add SCROLL_LEFT, the programe will screen trhough the whole message and not just a chunk of it
+  matrix.endDraw();//End the drawing
+}`
+};
+
+/* ============================================================
+   PROJECT DATA
+   ============================================================ */
+var PROJECTS = [
+{
+  id:"smart-trash", code:"ACT-01", fn:"Actuation", board:"Arduino UNO R4 WiFi",
+  title:"Smart Trash Can",
+  blurb:"An ultrasonic range finder opens a servo-driven lid when a hand comes within 20 cm, then releases the servo so it stops buzzing.",
+  tags:["HC-SR04","Servo","Averaging"],
+  ref:{u:"https://docs.sunfounder.com/projects/elite-explorer-kit/en/latest/fun_projects/07_fun_smart_can.html",t:"SunFounder Elite Explorer Kit: Smart Can"},
+  diagrams:[
+    {f:"smart-trash-bb",kind:"Wiring",cap:"Breadboard layout: HC-SR04 on D5/D6, SG90 servo signal on D9."},
+    {f:"smart-trash-sch",kind:"Schematic",cap:"Circuit schematic for the ultrasonic sensor and servo lid."}
+  ],
+  images:[{f:"smart-trash-1",cap:"Driver electronics: HC-SR04 on D5/D6, servo signal on D9."}],
+  videos:[
+    {f:"smart-trash-lid.mp4", cap:"Lid opening on approach."},
+    {f:"smart-trash-serial.mp4", cap:"Serial monitor: averaged distance and lid state."}
+  ],
+  files:[["Smart_Trash_Can_Project.ino","smart-trash"]],
+  pins:[
+    ["D9","SG90 servo signal","0&deg; open / 180&deg; closed. Attached only while moving."],
+    ["D5","HC-SR04 TRIG","10 &micro;s pulse starts a ranging cycle."],
+    ["D6","HC-SR04 ECHO","Pulse width measured with pulseIn(), divided by 58 for cm."],
+    ["5V / GND","Sensor + servo power","Servo current spikes share the rail, so decouple if it browns out."]
+  ],
+  overview:[
+    "I did not have a trash can in my room. Everything ended up in a bag on the floor or made the trip down the hall, and after a few weeks of that I decided the problem was worth building my way out of. If I was going to have a bin at all, it might as well be one that opened on its own.",
+    "The result is a distance-triggered lid. An HC-SR04 ultrasonic module ranges continuously and an SG90 servo drives the lid; when something comes within 20 cm the lid swings from 180&deg; to 0&deg; and holds there for two seconds. Every pass through the loop takes three range readings, averages them, and prints the result over serial alongside the lid state, which is how I tuned the trigger distance against real numbers instead of guessing at it.",
+    "The enclosure is the honest weak point. The current can is cardboard, cut and taped to carry the servo bracket and give the sensor a flat face to look out of. It works, but it flexes, and the servo horn has already worn its mounting hole. The next version is a <b>3D-printed body</b> with a proper hinge, a captive servo mount and a recessed sensor window, which also lets the electronics sit inside the wall of the can rather than taped to the outside of it."
+  ],
+  decisions:[
+    {t:"Average three readings instead of trusting one",b:"A single ultrasonic ping will occasionally come back as a wild value: a glancing echo off the rim, or a missed pulse that reads as a huge distance. Three samples averaged into <code>averageDistance</code> costs 30 ms and kills almost all of that false triggering."},
+    {t:"Detach the servo when the lid is closed",b:"A hobby servo holding position hunts back and forth and buzzes continuously. Calling <code>servo.detach()</code> after the close command cuts the signal so the gearbox goes quiet, and <code>servo.attach()</code> brings it back only for the next motion. It also stops the servo fighting the lid if someone closes it by hand."},
+    {t:"pulseIn() / 58.0 rather than a speed-of-sound expression",b:"The echo pulse is round-trip time. Dividing microseconds by 58 collapses the 343 m/s conversion and the divide-by-two for the return trip into one constant, which keeps the hot path to a single float operation."},
+    {t:"A named threshold, not a magic number",b:"<code>distanceThreshold = 20</code> sits at the top of the file with the pin assignments, so retuning the trigger distance for a taller or shorter can is a one-line change."},
+    {t:"Diverged from the reference on lid geometry and dwell",b:"The SunFounder build parks the servo at 90&deg; closed and holds the lid open for 3.5 s. My hinge needed the full 180&deg; sweep to clear the rim, and 2 s proved long enough to drop something in without the lid hanging open every time someone walked past. Both numbers were tuned against the actual can, not copied."}
+  ]
+},
+{
+  id:"pong", code:"DSP-01", fn:"Display", board:"Arduino UNO R4 WiFi",
+  title:"Pong on the LED Matrix",
+  blurb:"Playable Pong on the UNO R4's 8&times;12 onboard matrix, written three times: bouncing pixel, single-pixel paddle, then a forgiving three-pixel paddle.",
+  tags:["LED matrix","Framebuffer","Buttons"],
+  images:[
+    {f:"pong-1",cap:"Two momentary buttons on D11 / D12 drive the paddle."},
+    {f:"pong-2",cap:"Wiring detail: both buttons use INPUT_PULLUP, no external resistors."}
+  ],
+  videos:[
+    {f:"pong-bouncing.mp4", cap:"Stage one: ball physics only, no paddle."},
+    {f:"pong-paddle.mp4", cap:"Final version with the three-pixel paddle."}
+  ],
+  files:[
+    ["Bouncing_Pixel_on_Arduino_LEDMatrix.ino","pong-bounce"],
+    ["Pong_on_arduino_LED_Matrix.ino","pong-v1"],
+    ["Pong_ON_Arduino_matrix_WITH_EXTENDED_PADDLE.ino","pong-v2"]
+  ],
+  pins:[
+    ["Onboard","8&times;12 LED matrix","Driven through Arduino_LED_Matrix; renderBitmap() pushes the whole frame at once."],
+    ["D12","Yellow button","INPUT_PULLUP, paddle down-screen. Reads 0 when pressed."],
+    ["D11","Blue button","INPUT_PULLUP, paddle up-screen."],
+    ["GND","Button commons","Internal pull-ups mean no external resistors are needed."]
+  ],
+  overview:[
+    "This one was a test I set for myself. I had been working through guided builds and wanted to know how much of the Arduino I actually understood, so I picked a target and deliberately did not look up how to hit it. Pong was the obvious choice: it is a game I still play every now and then, the rules fit in a sentence, and the whole thing has to run inside 96 LEDs.",
+    "Working out the constraints myself was the entire point. The UNO R4 WiFi carries an 8&times;12 matrix on the board, which gives a 12-column window and eight rows of vertical travel, and that geometry dictates the design: the ball is a single pixel, the paddle lives on column 0, and the complete game state is a <code>byte frame[8][12]</code> that gets cleared, redrawn and pushed to the display in one call every tick.",
+    "I built it in three passes and kept all three sketches. First a bouncing pixel, to get the wall reflections and the sign flips right with nothing else in the way. Then a one-pixel paddle with a game-over check, which turned out to be nearly unplayable because the ball had to arrive on exactly the right row. Then the version I kept: a three-pixel paddle clamped to rows 1&ndash;6, with the buttons polled every loop but the ball advancing only on alternate ticks, so the paddle stays responsive while the ball moves at a speed a person can actually react to."
+  ],
+  decisions:[
+    {t:"Clear and redraw the whole frame every tick",b:"The nested <code>i</code>/<code>j</code> loop zeroes every pixel and then sets only the ball and paddle. Redrawing from scratch is slightly more work than tracking and erasing the old positions, but it makes ghost pixels impossible, and at 96 pixels the cost is irrelevant."},
+    {t:"Grow the paddle from one pixel to three",b:"A single-pixel paddle on an 8-row screen means the ball has to arrive on exactly the right row, which is luck rather than skill. Drawing <code>myRow-1</code> through <code>myRow+1</code> gives the player a real target and turns the miss condition into something they feel responsible for."},
+    {t:"Clamp the paddle instead of letting it wrap",b:"The first version let <code>myRow</code> run past the edge of the screen and the paddle silently vanished. Clamping to rows 1&ndash;6 keeps all three paddle pixels on-screen at both extremes, so the visible paddle always matches the collision test."},
+    {t:"Decouple input polling from the physics tick",b:"Buttons are read every pass through <code>loop()</code>, but the ball only advances when <code>cnt % 2 == 0</code>. That lets the paddle feel responsive while the ball still moves at a playable speed, instead of tying both to the same 250 ms delay."},
+    {t:"INPUT_PULLUP instead of external resistors",b:"Pressed reads as 0 and released as 1, which looks backwards in the source, but it removes two resistors from the breadboard and two chances for a floating input to trigger a phantom paddle move."}
+  ]
+},
+{
+  id:"dht11", code:"SEN-01", fn:"Sensors", board:"Arduino UNO R4 WiFi",
+  title:"DHT11 Environment Monitor",
+  blurb:"Press a button, get temperature in &deg;C and &deg;F, relative humidity, and the computed heat index scrolling across the LED matrix.",
+  tags:["DHT11","Heat index","Edge detection"],
+  images:[
+    {f:"dht11-1",cap:"DHT11 on A0, scrolling its reading across the onboard matrix."},
+    {f:"dht11-2",cap:"Button-triggered version: a reading happens only on demand."}
+  ],
+  videos:[
+    {f:"dht11-button.mp4", cap:"Button-triggered reading and matrix scroll."},
+    {f:"dht11-free.mp4", cap:"Free-running version for comparison."}
+  ],
+  files:[["dht11_sensor.ino","dht11"]],
+  pins:[
+    ["A0","DHT11 DATA","Single-wire protocol handled by the DHT library. Needs a 4.7&ndash;10 k&Omega; pull-up to 5V."],
+    ["D10","Momentary button","INPUT_PULLUP; a 1&rarr;0 transition requests one reading."],
+    ["Onboard","8&times;12 LED matrix","Scrolls the formatted string with ArduinoGraphics, Font_5x7."],
+    ["5V / GND","Sensor power","DHT11 needs ~2 s after power-up before its first valid reading."]
+  ],
+  overview:[
+    "My room runs hot, and I wanted a number instead of an opinion. A DHT11 was the cheapest way to get temperature and humidity into a sketch, and I had not worked with a one-wire digital sensor before, so the build doubled as a way to learn the part.",
+    "It did not work at first. The sensor returned nothing at all: no values, no errors, just failed reads. I spent a while assuming I had a dead part or a wiring fault. What actually fixed it was moving the data line onto an <b>analog pin</b>. On paper the DHT11 speaks a single-wire digital protocol and any digital pin should serve, but on this board and library combination it only behaved once it sat on A0. It is an odd failure mode, and the sort you only find by changing one variable at a time, but it is now the first thing I check when a sensor reads as silent rather than wrong.",
+    "The finished sketch takes a reading only when you press a button, because the DHT11 needs roughly two seconds between reads and hands back garbage if you rush it. Every reading is checked with <code>isnan()</code> before it is used, so a failed read never reaches the display. Temperature comes back in both Celsius and Fahrenheit and humidity as a percentage, and all three feed the library heat-index calculation, so the matrix scrolls what the air actually feels like rather than just what the thermometer says."
+  ],
+  decisions:[
+    {t:"Trigger on the button edge, not the button state",b:"Comparing <code>butval</code> against <code>butvalold</code> means one press produces exactly one reading. Testing the level instead would fire a new read on every loop iteration while the button was held down, and the DHT11 would start returning failures."},
+    {t:"Guard every read with isnan()",b:"The DHT11 signals a failed read by returning NaN, which propagates silently through the heat-index maths and ends up as a nonsense string on the display. Checking all three values and bailing out with <code>return</code> keeps bad data off the matrix entirely."},
+    {t:"Build one string, print it once",b:"An earlier version made a dozen <code>Serial.print()</code> calls per reading (still in the file, commented out). Concatenating into a single <code>message</code> means the serial log and the matrix scroll show exactly the same text, so what I read on the screen is what I debug against."},
+    {t:"Calibration delay in setup(), not the loop",b:"The 2 s <code>setUpDelay</code> after <code>dht.begin()</code> covers the sensor's power-on settling once, rather than paying for it on every read."}
+  ]
+},
+{
+  id:"doorbell", code:"AUD-01", fn:"Actuation", board:"Arduino UNO R4 WiFi",
+  title:"PIR Motion Doorbell",
+  blurb:"A passive infrared sensor watches the doorway; when someone crosses it, the R4's DAC synthesises a C-major arpeggio through a speaker.",
+  tags:["PIR","DAC audio","Melody"],
+  images:[{f:"doorbell-1",cap:"PIR sensor on D8, speaker driven from the R4's onboard DAC."}],
+  videos:[],
+  files:[
+    ["Doorbell_Sensor_V2.ino","doorbell-v2"],
+    ["Doorbell_Speaker_PIRsensor_Project.ino","doorbell-v1"],
+    ["pitches.h","doorbell-pitches"]
+  ],
+  pins:[
+    ["D8","PIR OUT","Digital HIGH while motion is detected. Needs ~10 s to settle at power-up."],
+    ["A0 (DAC)","Speaker / amp input","analogWave generates a sine at each note frequency."],
+    ["5V / GND","PIR power","PIR modules often have onboard sensitivity and hold-time trim pots."]
+  ],
+  overview:[
+    "I wanted to know when someone came into my room. A doorbell is the simplest possible version of that: one sensor, one sound, no screen and nothing to check. So this became a small security upgrade for the doorway. A PIR module watches the entrance and the board plays a chord when the beam is broken.",
+    "The real problem turned out to be power, not code. The audio amplifier driving the speaker would not run properly from the Arduino: the board could not supply the current it needed, so the output was weak, distorted and dropped out under load. <b>Adding a separate battery to power the amplifier fixed it immediately.</b> That is the lesson I took from this build: a circuit that misbehaves under load is usually a supply problem, and logic pins are for signalling, not for powering anything that draws real current.",
+    "On the firmware side I used the UNO R4 DAC rather than the usual <code>tone()</code> trick. analogWave synthesises a true sine at each note frequency instead of squaring a pin on and off, which sounds far less harsh through a small speaker. The melody is stored as flat note-and-duration pairs, a C-major arpeggio up and back down, with each note sounding for 85% of its slot and resting for the remainder so the notes separate instead of running together. The PIR gets a 10-second calibration window at startup and a 5-second lockout after each ring, so it will not retrigger while somebody is still standing in the doorway."
+  ],
+  decisions:[
+    {t:"Rewrote the melody player as a for-loop over pairs",b:"V1 walked the array with a <code>while(1)</code> and a modulo counter that had to be incremented by two in the right place, and easy to get wrong by one and start reading a duration as a pitch. V2 computes <code>totalElements</code> once and steps <code>i += 2</code>, which makes the pairing structural instead of something the loop body has to remember."},
+    {t:"85% note, 15% silence",b:"Holding each note for its full duration runs notes together into one continuous drone. Sounding the wave for 85% of the time and stopping it for the last 15% gives each note an attack, so the arpeggio reads as separate notes."},
+    {t:"Inlined the note table in V2",b:"V1 pulled frequencies from a <code>pitches.h</code> include. V2 puts the <code>#define</code> block at the top of the sketch so the file is self-contained and compiles on any machine without the header sitting beside it."},
+    {t:"Explicit 10 s PIR calibration with a serial message",b:"A PIR sensor has to establish a thermal baseline before it reports usefully, and during that window it fires constantly. Blocking for 10 s in <code>setup()</code> and printing \"Calibrating\" turns a confusing burst of phantom rings into an expected startup step."},
+    {t:"5 s lockout after each ring",b:"PIR output stays HIGH while someone is still in frame. Without the <code>dt</code> delay the melody would retrigger continuously for as long as a person stood at the door."}
+  ]
+},
+{
+  id:"light-array", code:"SEN-02", fn:"Sensors", board:"Arduino UNO R4 WiFi",
+  title:"Light-Sensitive LED Bar Graph",
+  blurb:"A photoresistor drives an eight-LED bar graph: the brighter the room, the more LEDs light, turning an analogue reading into something you can read across the room.",
+  tags:["Photoresistor","ADC","Bar graph"],
+  ref:{u:"https://docs.sunfounder.com/projects/elite-explorer-kit/en/latest/fun_projects/04_fun_light_array.html",t:"SunFounder Elite Explorer Kit: Light-Sensitive Array"},
+  diagrams:[
+    {f:"light-array-bb",kind:"Wiring",cap:"Breadboard layout: eight LEDs on D5&ndash;D12, photocell divider into A0."},
+    {f:"light-array-sch",kind:"Schematic",cap:"Circuit schematic showing the divider and the eight LED branches."}
+  ],
+  images:[],
+  videos:[{f:"light-array.mp4", cap:"LEDs tracking a hand shadowing the photocell."}],
+  files:[["Light_Sensitive_LED_array.ino","light-array"]],
+  pins:[
+    ["A0","Photocell divider","Photoresistor in series with a fixed resistor; the junction feeds the ADC."],
+    ["D5 &ndash; D12","LED bar (8 LEDs)","Each LED through its own current-limiting resistor to ground."],
+    ["GND","LED cathodes","Common return for the whole bar."]
+  ],
+  overview:[
+    "Two reasons for this one. I wanted to understand how a photoresistor actually behaves, not the textbook description but what the numbers do as the light in a room changes, and I wanted to map where the natural light in my room falls through the day, so I could work out where to put a desk and make the most of it.",
+    "It reads the photocell through a voltage divider on A0 and lights a proportional number of LEDs across D5 to D12, turning a continuous analog value into something readable from across the room at a glance. Eight LEDs is not much resolution, but it is enough to watch a shadow pass or the sun move off a wall without sitting over a serial monitor.",
+    "The useful discovery was in the calibration. Mapping the raw 0&ndash;1023 ADC range onto the bar left it close to useless: the divider never came anywhere near zero in a normally lit room, so the bottom LEDs were permanently on and the whole scale was crushed into the top half. Measuring the real floor and <b>mapping from 300 instead</b> spent the full eight-LED range on light levels that genuinely occur. Matching a sensor scale to its actual operating range rather than its theoretical one is the thing I carried out of this build."
+  ],
+  decisions:[
+    {t:"Map from 300, not from 0",b:"The photocell divider never actually reaches 0 in a normal room; its real floor sat around 300 counts. Mapping <code>300 &rarr; 1023</code> onto the bar instead of <code>0 &rarr; 1023</code> spends the full eight-LED range on light levels that actually occur, so the bar uses its whole travel."},
+    {t:"Drive every LED every pass",b:"The loop writes HIGH or LOW to all eight pins rather than just the ones that changed. It means the displayed bar can never disagree with <code>ledLevel</code>, even if a reading jumps several steps at once."},
+    {t:"Array of pins instead of eight named variables",b:"<code>ledPins[]</code> plus <code>NbrLEDs</code> turns both <code>setup()</code> and the render loop into three lines each, and adding a ninth LED is a one-element edit rather than a new branch."},
+    {t:"No serial output in the hot loop",b:"The bar itself is the readout. Leaving <code>Serial</code> out keeps the response to a moving shadow immediate, with no UART blocking between samples."}
+  ]
+},
+{
+  id:"smart-car", code:"DRV-01", fn:"Actuation", board:"SunFounder R3 (Uno-compatible)",
+  title:"Two-Motor Drive Car",
+  blurb:"In progress: an L9110-driven two-motor platform that drives forward, reverses, and spins in place by running its wheels against each other.",
+  tags:["H-bridge","DC motors","In progress"],
+  ref:{u:"https://docs.sunfounder.com/projects/3in1-kit-v2/en/latest/car_project/car_move_by_code.html",t:"SunFounder 3-in-1 Kit v2: Move by Code"},
+  diagrams:[
+    {f:"smart-car-bb",kind:"Wiring",cap:"Chassis wiring: L9110 module, two TT gearmotors, separate 9 V motor supply."}
+  ],
+  images:[],
+  videos:[],
+  files:[["Moving_AND_Spining.ino","smart-car"]],
+  pins:[
+    ["D5 / D6","L9110 A-1B / A-1A","Left channel input pair. Which pin is HIGH sets the direction."],
+    ["D9 / D10","L9110 B-1B / B-1A","Right channel, mirrored."],
+    ["OA / OB (A)","Left TT gearmotor","Driver output terminals."],
+    ["OA / OB (B)","Right TT gearmotor","Driver output terminals."],
+    ["9 V / GND","Motor supply","Separate battery pack, so motor current never runs through the board regulator."]
+  ],
+  overview:[
+    "This one came out of my engineering design class. We built a vehicle there as a largely mechanical exercise, and I kept thinking the interesting half was missing. It moved, but nothing decided how. I wanted to rebuild it with the electronics actually in it.",
+    "The chassis is an acrylic plate my family had spare, with the motors, driver and board mounted to it using glue and tape. It is not a finished piece of fabrication and I would not present it as one, but it was rigid enough to get the drive layer working, and building it out of what was genuinely on hand instead of waiting on parts is the reason it exists at all.",
+    "Electrically it is two TT gearmotors on an L9110 dual driver, four digital pins, and a separate 9 V pack so motor current never runs back through the board regulator. That gives a differential drive: both wheels forward is straight, opposite directions is a zero-radius spin. Each manoeuvre is its own named function setting all four pins explicitly, with a deliberate stop between moves so the driver is never asked to reverse a motor that is still spinning.",
+    "<b>Status: in progress.</b> Sensors, closed-loop steering and a properly cut or printed chassis are all still ahead of it. It is the build I have learned the most from, and the one I keep coming back to."
+  ],
+  decisions:[
+    {t:"One function per manoeuvre",b:"Each motion sets all four pins explicitly, so no manoeuvre inherits a stale pin state from the one before it. That also means <code>loop()</code> reads as a sequence of intentions, which is what you want when you are debugging why the car veers."},
+    {t:"A deliberate stop between every move",b:"Switching a brushed motor straight from forward to reverse slams current through the H-bridge. Calling <code>stopMove()</code> with a 500 ms settle in between protects the driver and stops the chassis lurching."},
+    {t:"Turns spin both motors, not just one",b:"Driving one wheel and leaving the other free gives a wide, unpredictable arc. Running the wheels in opposition pivots the car about its own centre, which is repeatable and fits through doorways."},
+    {t:"const int for pin assignments",b:"The pin names are the wiring diagram. Marking them <code>const</code> means a typo that tries to reassign one fails at compile time instead of at 2 a.m. on the carpet."}
+  ]
+},
+{
+  id:"servo-pot", code:"ACT-02", fn:"Actuation", board:"Arduino UNO",
+  title:"Servo Angle from a Potentiometer",
+  blurb:"A knob you turn, an arm that follows. The 10-bit ADC reading is mapped straight onto servo angle, deliberately inverted.",
+  tags:["Servo","ADC","Linear map"],
+  images:[],
+  videos:[{f:"servo-pot.mp4", cap:"Servo tracking the potentiometer in real time."}],
+  files:[["controlling_Servo_With_Potentiometer.ino","servo-pot"]],
+  pins:[
+    ["D9","Servo signal","50 Hz PWM generated by the Servo library."],
+    ["A2","Potentiometer wiper","Outer legs to 5V and GND, forming an adjustable divider."],
+    ["5V / GND","Servo power","A stalled servo can pull over 1 A, so power it externally for anything loaded."]
+  ],
+  overview:[
+    "The simplest closed loop that still has a person in it: read a voltage, write an angle, repeat every 50 ms. It is also the clearest place to see the two number ranges that dominate embedded work, 0&ndash;1023 coming off the ADC and 0&ndash;180 going into the servo, and the arithmetic that has to bridge them.",
+    "A potentiometer forms an adjustable divider on A2 and the servo takes its 50 Hz pulse train from D9. The angle is printed to serial on every pass, which is what separates a noisy potentiometer from a servo that is hunting on its own: if the printed number is steady and the arm still twitches, the fault is mechanical or electrical, not in the reading.",
+    "This build is the control primitive the rest of the actuator work is built on. The Smart Trash Can is the same servo, the same PWM pin and the same attach-and-detach discipline, driven by a distance threshold instead of a knob."
+  ],
+  decisions:[
+    {t:"Inverted the mapping on purpose",b:"<code>(-180.0/1023.0) * potval + 180.0</code> rather than a straight <code>map()</code>. The knob's physical rotation direction did not match the arm's, and flipping the slope in software was the honest fix: no rewiring, no mounting the pot backwards."},
+    {t:"Float coefficients, integer result",b:"Writing the constants as <code>-180.0</code> and <code>1023.0</code> forces the division to happen in floating point. With integer literals, <code>-180/1023</code> truncates to 0 and the arm never moves, a bug that looks like dead hardware."},
+    {t:"50 ms loop delay",b:"Standard hobby servos update at 50 Hz. Sending new angles faster than that just floods the library; <code>dt = 50</code> matches the write rate to what the servo can physically act on."}
+  ]
+},
+{
+  id:"led-pot", code:"ANA-01", fn:"Analog", board:"Arduino UNO",
+  title:"LED Dimmer with Voltage Readout",
+  blurb:"A potentiometer dims an LED while the sketch reports the actual voltage at the wiper. The circuit explains itself over serial.",
+  tags:["PWM","ADC","Instrumentation"],
+  images:[{f:"ledpot-1",cap:"Potentiometer on A0 setting LED brightness on D9."}],
+  videos:[{f:"led-pot.mp4", cap:"Brightness sweeping with live voltage printed to serial."}],
+  files:[["LEDbrightnesswithpotentiometer_readingvoltage.ino","led-pot"]],
+  pins:[
+    ["D9","Red LED anode","PWM-capable pin; LED through a ~220 &Omega; resistor."],
+    ["A0","Potentiometer wiper","0&ndash;5 V divider feeding the 10-bit ADC."],
+    ["GND","LED cathode / pot leg","Common ground."]
+  ],
+  overview:[
+    "The same dimmer circuit as the other potentiometer builds, but assembled as a measuring instrument rather than a light. Alongside mapping the reading to a PWM duty cycle, it converts raw ADC counts back into volts with <code>potVal * (5.0/1023.0)</code> and prints the result, so the voltage and the brightness can be watched moving together.",
+    "That conversion is the whole point of the exercise. It makes the ADC resolution concrete: 1023 counts spread across 5 V is roughly 4.9 mV per count, and watching the printed value step in those increments explains quantisation far better than reading about it does.",
+    "It is also the first build where the serial monitor stops being a debug log and becomes a measurement tool. A printed voltage can be checked against a multimeter; a printed count cannot be checked against anything."
+  ],
+  decisions:[
+    {t:"Report volts, not counts",b:"\"712\" tells you nothing about the circuit. \"3.48 V\" can be checked against a multimeter, which is what turns the serial monitor into a debugging tool rather than a log."},
+    {t:"5.0/1023.0 written as a visible expression",b:"Leaving the scale factor as a division of two named quantities keeps the reference voltage and the ADC range readable in the source. Pre-computing 0.00489 would hide both."},
+    {t:"map() for brightness, arithmetic for volts",b:"Two different jobs. <code>map(potVal, 0, 1023, 0, 255)</code> declares the intent to rescale a range; the volts line is a physical unit conversion. Using the right tool for each keeps them from being confused later."},
+    {t:"100 ms delay so the log stays readable",b:"Without it the serial monitor scrolls faster than anyone can read and the USB buffer becomes the bottleneck. 10 Hz is still fast enough to feel live."}
+  ]
+},
+{
+  id:"analog-led", code:"ANA-02", fn:"Analog", board:"Arduino UNO",
+  title:"Exponential LED Dimming Curve",
+  blurb:"The same dimmer, but driven by a power curve instead of a linear map, because the eye does not perceive brightness linearly.",
+  tags:["PWM","Perception","Gamma"],
+  images:[{f:"analog-1",cap:"Single-LED dimmer rig used to compare the two curves."}],
+  videos:[],
+  files:[["analogLEDpotentiometer.ino","analog-led"]],
+  pins:[
+    ["D9","LED anode","PWM output, ~220 &Omega; series resistor."],
+    ["A0","Potentiometer wiper","Input voltage divider."],
+    ["GND","Return","Common ground."]
+  ],
+  overview:[
+    "A linear map from knob to duty cycle feels wrong the moment you put your hand on it. Almost all of the visible change happens in the first quarter of the travel and the top three quarters look identical. The circuit is behaving exactly as designed. The problem is that human brightness perception is roughly logarithmic, so a linear drive does not produce a linear-looking result.",
+    "The fix is to make the drive curve exponential. This sketch replaces <code>map()</code> with <code>pow(2, potVal/127.875) - 1</code>. The divisor is derived, not tuned: 1023 divided by 8 is 127.875, so the exponent sweeps 0&ndash;8 as the ADC sweeps its full range, putting the output at 2<sup>8</sup>&minus;1 = 255 exactly at full scale, and the &minus;1 pulls the curve through the origin so the LED is genuinely off at zero.",
+    "Both the raw and converted values print side by side, and the original linear expression is still in the file as a comment, so the two curves can be compared directly rather than taken on trust. Compensating for how a measurement will be perceived, not just how it was taken, is the transferable idea here."
+  ],
+  decisions:[
+    {t:"Exponential output to linearise perception",b:"Because perceived brightness is close to logarithmic, an exponential duty curve makes the knob feel even across its whole travel. The linear version is still in the file, commented out, so the comparison is one edit away."},
+    {t:"127.875 is derived, not tuned",b:"1023 / 8 = 127.875. Dividing by it maps the ADC range onto an exponent range of 0&ndash;8, and the <code>-1</code> pulls the curve through the origin so the LED is genuinely off at zero instead of sitting at duty 1."},
+    {t:"Print both values every pass",b:"Logging <code>potVal</code> and <code>writeVal</code> together makes the shape of the curve visible in the serial monitor. The output barely moves at the low end and then climbs steeply, which is exactly what the eye needs."},
+    {t:"Kept the linear line as a comment",b:"Normally dead code should go, but here the two expressions side by side are the finding. The comment is the experiment's record."}
+  ]
+},
+{
+  id:"rgb-mixer", code:"DSP-02", fn:"Display", board:"Arduino UNO",
+  title:"Serial-Controlled RGB Mixer",
+  blurb:"Type a colour name into the serial monitor and the RGB LED produces it, with per-channel trims because the three dies are not equally bright.",
+  tags:["RGB LED","Serial input","Colour trim"],
+  images:[{f:"rgb-1",cap:"Common-cathode RGB LED on D9 / D10 / D11."}],
+  videos:[],
+  files:[["multiple_colors_onRGB_LED.ino","rgb-mixer"]],
+  pins:[
+    ["D9","Red anode","PWM, ~220 &Omega;."],
+    ["D10","Green anode","PWM, ~220 &Omega;. The green die is the brightest, so it is driven hardest down."],
+    ["D11","Blue anode","PWM, ~220 &Omega;."],
+    ["GND","Common cathode","Single shared return leg."]
+  ],
+  overview:[
+    "A serial-driven colour console. The sketch prints a prompt, blocks until something arrives, normalises the case, and writes a PWM triple to the three channels of a common-cathode RGB LED. Eight named colours plus an off state.",
+    "The interesting part is that the triples are not the textbook values. Yellow is not (255, 255, 0) but (255, 25, 0), and white is (255, 100, 120). The green and blue dies in this package are far more efficient than the red one, so equal duty cycles produce a green-tinted result rather than a neutral one. Every value here was trimmed by eye against the actual part.",
+    "That calibration step is the lesson: colour theory gives you the starting point, and the specific component in front of you gives you the correction. No datasheet hands you those numbers, and they would be different for a different LED."
+  ],
+  decisions:[
+    {t:"Trim each channel by eye instead of trusting RGB theory",b:"The green and blue dies in this package are far more efficient than the red, so equal duty cycles give a green-tinted result. Pulling green to 25 for yellow and to 100/120 for white is calibration against the real part, the kind of correction no datasheet hands you."},
+    {t:"Block on Serial.available() instead of polling",b:"<code>while(Serial.available() == 0){}</code> makes the console genuinely request-driven: the loop waits for a human rather than spinning and reprinting the prompt dozens of times a second."},
+    {t:"toLowerCase() before comparing",b:"\"Red\", \"RED\" and \"red\" all have to work. Normalising once at the input boundary means the eight comparisons downstream each need only one form."},
+    {t:"Echo the selection back",b:"Printing \"Color Red chosen\" separates a parsing failure from a wiring failure. Silence after a command tells you the string did not match; the echo with a dark LED points at the circuit."}
+  ]
+},
+{
+  id:"rgb-blink", code:"DSP-03", fn:"Display", board:"Arduino UNO",
+  title:"Counted RGB Blink Cycle",
+  blurb:"Ask for a number of blinks over serial and the RGB LED runs exactly that many red-green-blue cycles, counting each one back as it goes.",
+  tags:["Serial parsing","for loop","RGB LED"],
+  images:[{f:"rgbblink-1",cap:"RGB LED mid-cycle during a counted blink run."}],
+  videos:[],
+  files:[["blinkingaRGB_LED_onuser_input_amount_ofTime_usingFORLOOP.ino","rgb-blink"]],
+  pins:[
+    ["D9 / D10 / D11","R / G / B anodes","All three PWM-capable, each with its own series resistor."],
+    ["GND","Common cathode","Shared return."]
+  ],
+  overview:[
+    "A loop-control exercise with a user-supplied bound. The sketch reads an integer from the serial monitor, runs exactly that many red-green-blue cycles at 150 ms per colour with a one-second pause between them, and prints the iteration index as it goes so the light and the log can be checked against each other.",
+    "It also exercises the part of serial input that is usually got wrong: turning incoming characters into a usable number. <code>Serial.parseInt()</code> handles multi-digit entry and discards the trailing newline, so typing 12 arrives as the integer 12 rather than as two characters and a line ending to unpick by hand.",
+    "The small detail worth keeping is what happens at the end. The final iteration would otherwise leave the blue channel lit, so all three channels are explicitly zeroed when the run completes, making <i>finished</i> a visible state rather than something you have to count to confirm."
+  ],
+  decisions:[
+    {t:"parseInt() rather than reading characters",b:"<code>Serial.parseInt()</code> handles multi-digit entry and discards the trailing newline, so \"12\" arrives as 12 rather than as the characters '1' and '2' and a line ending to unpick by hand."},
+    {t:"Turn all three channels off after the run",b:"The last iteration leaves blue lit. Explicitly zeroing all three at the end makes \"finished\" a visible state rather than something ambiguous you have to count to confirm."},
+    {t:"Print the iteration index",b:"Printing <code>i</code> each pass means the serial log and the LED can be checked against each other. If the light blinks five times and the log says five, the loop bound is right."},
+    {t:"Separate short and long delays as named constants",b:"<code>shortD</code> sets colour dwell and <code>longD</code> separates cycles. Naming them makes the timing an adjustable parameter instead of four scattered numbers."}
+  ]
+},
+{
+  id:"matrix-text", code:"DSP-04", fn:"Display", board:"Arduino UNO R4 WiFi", demo:"matrix",
+  title:"Scrolling Text on the LED Matrix",
+  blurb:"Arbitrary strings scrolled across 96 LEDs with ArduinoGraphics. The Media tab runs a live simulation of the display.",
+  tags:["LED matrix","ArduinoGraphics","Typography"],
+  images:[],
+  videos:[],
+  files:[["Text_on_Arduino_Matrix.ino","matrix-text"]],
+  pins:[
+    ["Onboard","8&times;12 LED matrix","No external wiring. The matrix is part of the UNO R4 WiFi board."],
+    ["USB","Serial at 115200","Used to push new message strings while iterating."]
+  ],
+  overview:[
+    "Twelve columns is narrower than most words, so text on this display has to move. ArduinoGraphics handles the scrolling; the real work is choosing a font that fits the eight available rows and a speed that stays readable at that size.",
+    "Font_5x7 is the largest glyph the matrix can hold, and on a display this coarse legibility beats fitting more characters. The 4&times;6 font squeezes in more but the letters start colliding. Starting the text at row 1 rather than row 0 uses the single spare row to centre the glyphs as well as they can be centred. Without the SCROLL_LEFT argument on <code>endText()</code>, the call renders only the first twelve columns and stops.",
+    "Holding the message in a <code>String</code> variable rather than inline means the same sketch becomes a name badge, a status ticker, or the readout for the DHT11 build by changing one line. The Media tab runs a JavaScript port of this sketch so the scroll can be seen without the board in hand."
+  ],
+  decisions:[
+    {t:"Font_5x7 over Font_4x6",b:"Seven of the eight rows is the largest glyph the matrix can hold, and on a display this coarse legibility beats fitting more characters. The 4&times;6 font squeezes in more but letters start colliding."},
+    {t:"beginText at row 1, not row 0",b:"A 7-pixel font in an 8-pixel-tall matrix leaves exactly one spare row. Starting at row 1 centres the glyphs as well as they can be centred and keeps descender-less capitals off the top edge."},
+    {t:"endText(SCROLL_LEFT) to commit the whole string",b:"Without the scroll argument the call renders only the first twelve columns and stops. SCROLL_LEFT is what makes the full message pass through the window."},
+    {t:"Message held in a String variable",b:"Keeping the text in <code>message</code> rather than inline in the print call means the same sketch becomes a name badge, a status ticker, or the DHT11 readout by changing one line."}
+  ]
+}
+];
+
+/* ============================================================
+   SOLIDWORKS: beginner part, assembly and drawing exercises.
+   Previews extracted from the native SolidWorks documents.
+   ============================================================ */
+var CAD = [
+{
+  cad:true, id:"cad-plate", code:"SW-01", type:"Part", file:"Pressure Plate - CAD Design.SLDPRT",
+  title:"Pressure Plate", img:"cad-plate",
+  blurb:"My first SolidWorks part, a circular plate carrying six bossed bores on a bolt circle.",
+  desc:[
+    "The first part I modelled in SolidWorks, and the one the rest of these exercises were built on top of. A flat circular plate with a central bore, six raised cylindrical bosses spaced evenly around a bolt circle, and each boss bored through.",
+    "The point of the exercise was to stop drawing every feature by hand. The six bosses are one feature and a circular pattern, not six sketches, so changing the bolt-circle diameter or the boss count is an edit to two numbers rather than a remodel."
+  ],
+  features:["Base extrude","Circular pattern","Through bores","Fillets"]
+},
+{
+  cad:true, id:"cad-plate-drw", code:"SW-02", type:"Drawing", file:"Pressure Plate - Drawing Design.SLDDRW",
+  title:"Pressure Plate Drawing Sheet", img:"cad-plate-drw",
+  blurb:"The manufacturing drawing for SW-01: section view, detail view, dimensions and a filled title block.",
+  desc:[
+    "Here is the same pressure plate part I made, translated from a 3D model into a drawing someone can actually manufacture. To make the layout intuitive, I included an isometric view for quick orientation alongside a fully dimensioned front view. I added a full section cut (A–A) to clearly communicate the bore depths, and a scaled detail (C) for the boss geometry, which was simply too small to dimension cleanly in the main view.",
+    "Creating this sheet was the moment all those theoretical drafting rules finally clicked. It forced me to make practical decisions and figure out exactly which view should hold a specific dimension, deciding when a section cut genuinely earns its place, and knowing what information belongs safely in the title block instead of cluttering the sheet."
+  ],
+  features:["Section view A&ndash;A","Detail view C","Dimensioning","Title block"]
+},
+{
+  cad:true, id:"cad-brick", code:"SW-03", type:"2 Parts + Assembly",
+  file:"Tutor1.SLDPRT &middot; Tutor2.SLDPRT &middot; Tutor.SLDASM",
+  title:"1&times;1 LEGO Brick", img:"cad-tutor-asm",
+  imgs:[
+    {f:"cad-tutor2",    cap:"Tutor2.SLDPRT: the shelled brick body, open on one face."},
+    {f:"cad-tutor1",    cap:"Tutor1.SLDPRT: the mating face carrying the stud."},
+    {f:"cad-tutor-asm", cap:"Tutor.SLDASM: both parts mated into the finished brick."}
+  ],
+  blurb:"Two parts modelled separately, then mated into one assembly, aiming for a 1&times;1 LEGO brick.",
+  desc:[
+    "I modelled these as two separate parts specifically to learn how assemblies work in SOLIDWORKS. Up to this point every exercise had been a single document, so this was the first time I had to make one part agree with another rather than model something in isolation.",
+    "Both parts lean on the same two features: hollowing and fillets. The hollowing shells each body to a constant wall thickness, so the thickness is one parameter rather than several walls that have to be kept in step. The fillets round the edges so the parts look clean and seamless instead of reading as raw modelled solids.",
+    "Those two features are doing more than making the parts look finished. They are also what lets the two halves seat into one another cleanly: the shelled cavity in one part is what the other part enters, and the filleted edges give that entry a lead-in rather than a hard square lip catching on a corner. Bringing them together in Tutor.SLDASM is where that gets tested, because two parts that each look correct on their own will still refuse to mate if their dimensions were decided independently instead of against a shared interface."
+  ],
+  features:["Hollowing / shell","Fillets","Concentric &amp; coincident mates","First assembly"]
+},
+{
+  cad:true, id:"cad-brick-drw", code:"SW-04", type:"Drawing", file:"Tutor1.SLDDRW",
+  title:"LEGO Brick Drawing Sheet", img:"cad-tutor1-drw",
+  blurb:"The drawing sheet for the brick part: a standard three-view orthographic layout with an isometric.",
+  desc:[
+    "This is the documentation for the SW-03 'LEGO brick' part. The drawing features projected front, top, and right views, alongside an isometric view in the free corner, all formatted on a standard A-size sheet with a fully populated title block.",
+    "The core focus of this exercise was mastering third-angle projection. This standard is what makes the drawing functional: because each view is placed on the side of the parent object it represents, an engineer or machinist can mentally reconstruct the 3D solid without ever needing the isometric reference. It really reinforced how critical projection direction is. If this were accidentally laid out in first-angle projection, anyone reading it strictly by the book would manufacture a completely different part."
+  ],
+  features:["Three-view projection","Isometric view","Sheet format","A-size border"]
+},
+{
+  cad:true, id:"cad-nozzle", code:"SW-05", type:"Part", file:"nozzle_01.sldpart.SLDPRT",
+  title:"Spray Nozzle", img:"cad-nozzle",
+  blurb:"A trigger sprayer head, the most organic geometry in the set, built from blended curved bodies.",
+  desc:[
+    "This project involved modeling a spray-bottle trigger head, featuring a finger-grooved lever, a swept body that arches smoothly into the outlet, and a threaded collar for the bottle neck.",
+    "The core challenge here was that absolutely nothing on this part is a simple prismatic extrude. The entire form relies on swept and blended surfaces flowing seamlessly into one another. It required a complete shift in mindset from standard box modeling to advanced surfacing, which I found difficult as a beginner. Maintaining geometric continuity across every join is critical. I quickly learned that a fillet sized just a fraction too large in one area can cause the surface to fail somewhere else entirely. It was a masterclass in how interconnected and sensitive organic geometry really is."
+  ],
+  features:["Swept body","Blended transitions","Ergonomic grooves","Multi-body"]
+},
+{
+  cad:true, id:"cad-mhousing", code:"SW-06", type:"Part", file:"mhousing_jonathan.SLDPRT",
+  title:"Cup Holder", img:"cad-mhousing",
+  blurb:"A tapered cup holder, shelled to a thin wall with a patterned array of slots cut around the body.",
+  desc:[
+    "A cup holder I designed. The body tapers from a wide opening down to a narrow base, is shelled to a thin wall, and carries two rows of elongated slots patterned around the circumference.",
+    "I built it to push further on two things I had only touched before. The first was fillets, rounding every edge the hand meets so the part reads as a finished product rather than a modelled solid. The second was repeated hollowing: instead of cutting each slot as its own separate feature, one slot is modelled and then patterned around the body. Cutting twenty slots individually would have produced the same shape, but it would also have meant twenty separate edits every time the spacing or the slot size changed. As a pattern it stays one feature and a count."
+  ],
+  features:["Shell / hollowing","Patterned cuts","Edge fillets","Draft / taper"]
+},
+{
+  cad:true, id:"cad-knob", code:"SW-07", type:"Part", file:"Knob.SLDPRT",
+  title:"Stove Knob", img:"cad-knob",
+  blurb:"A compact stove knob with a domed profile, ribbed grip, and a recess keyed to a flat shaft.",
+  desc:[
+    "Here’s a model of a compact mechanical knob. It features a domed profile, ribbed texturing along the grip, and a specific recess built to perfectly key onto a flat shaft.",
+    "While it might look like a simple component, it’s actually packed with real-world design constraints. The ribs are there for human ergonomics, the rounded geometry is specifically designed to release cleanly from a mold, and the mating features are entirely dictated by the hardware it attaches to. It was a great practical lesson in Design for Manufacturing (DFM). When you model parts like this, you aren't just drawing something that looks good. You're defining exactly how it gets made and how it interacts with the rest of the assembly."
+  ],
+  features:["Revolved base","Rib features","Shaft recess","Design for Manufacturing"]
+},
+{
+  cad:true, id:"cad-cstick", code:"SW-08", type:"Part", file:"Cstick.SLDPRT",
+  title:"Candlestick Holder", img:"cad-cstick",
+  blurb:"A polished candlestick holder built from stacked revolved profiles driven by one master sketch.",
+  desc:[
+    "This project focuses on a traditional, polished metal candlestick holder, a multi-element design with clear functional and aesthetic features. The central body, spanning from the wide, footed, and flared base to the stacked pedestal and the culminating candle-holding cup, is efficiently defined using advanced, stacked revolved profiles.",
+    "The central, complex geometry was designed to be managed and controlled within a single, continuous 2D silhouette sketch that is then spun around an axis. Maintaining this single master sketch was a strategic choice for efficiency and precision. This parametric approach ensures geometric continuity across the curves of the base, the pedestal transitions, and the cup's detail. More importantly, it makes design iteration incredibly powerful: by editing dimensions directly within the core sketch (such as altering the cup's depth, the pedestal's waist width, or the base's foot profile), the entire central form updates instantly, eliminating the need to manually rebuild features and allowing for rapid exploration of different design variations. This project was a great lesson in utilizing parametric geometry for complex forms and for defining precise assembly interfaces between separate parts."
+  ],
+  features:["Stacked revolves","Master sketch","Parametric iteration","Profile continuity"]
+},
+{
+  cad:true, id:"cad-cover", code:"SW-09", type:"Part", file:"Cover.SLDPRT",
+  title:"Sheet Metal Design", img:"cad-cover",
+  blurb:"A custom bracket built with SolidWorks sheet metal tools: bent flanges, mounting tabs and a relief cutout.",
+  desc:[
+    "As shown, this design focused on making a custom sheet metal bracket, featuring a base flange, multiple bent edge flanges, mounting tabs, and a central semi-circular relief cutout.",
+    "The primary objective was to accurately replicate a reference design while strictly utilizing SolidWorks sheet metal tools rather than standard solid extrudes. This required a shift toward a manufacturing engineering mindset: maintaining a uniform material thickness, applying realistic measurements for the bends, and incorporating proper corner reliefs to prevent material tearing. The true test of the model wasn't just making it look identical to the target in 3D, but ensuring the geometry could successfully unfold into a clean, manufacturable 2D flat pattern for laser cutting and press-brake forming."
+  ],
+  features:["Sheet metal tools","Bend allowance","Corner relief","Flat pattern"]
+},
+{
+  cad:true, id:"cad-hammerflex", code:"SW-10", type:"Part", file:"hammerflex.SLDPRT",
+  title:"Hammer Head", img:"cad-hammerflex",
+  blurb:"A cross-pein hammerhead lofted across offset planes, morphing a round striking face into a square body.",
+  desc:[
+    "Here is a cross-pein hammerhead I modeled. Building this meant stepping away from standard features and relying entirely on precise lofts across a series of offset planes to control the organic transitions of the tool.",
+    "The biggest hurdle here was the profile mapping. Forcing a round striking face to smoothly morph into a square body without the 3D surface twisting or collapsing in on itself requires incredibly tight control over your guide curves. It also really forces you to think about the physical reality of the tool: if those curved transitions aren't perfectly smooth in the CAD environment, they become massive stress concentrators in the real world that will fail under heavy impact."
+  ],
+  features:["Loft","Offset planes","Guide curves","Profile mapping"]
+}
+];
+
+function cadCardHTML(p, i){
+  return '<button class="card" data-cad="' + i + '" type="button">' +
+    '<div class="thumb"><img class="cad-thumb" src="' + cadSrc(p.img) + '" alt="' + p.title + '" loading="lazy">' +
+    '<div class="badges"><span class="badge">' + p.type + '</span></div></div>' +
+    '<div class="card-body">' +
+      '<div class="card-top"><span class="card-code">' + p.code + '</span>' +
+      '<span class="card-board">SOLIDWORKS</span></div>' +
+      '<h3>' + p.title + '</h3><p>' + p.blurb + '</p>' +
+      '<div class="card-foot"><span>' + p.features.slice(0,2).join(" &middot; ") + '</span>' +
+      '<span class="open">Open &rarr;</span></div>' +
+    '</div></button>';
+}
+function cadModel(p){
+  var list = p.imgs || [{f:p.img, cap:p.file}];
+  var h = '<div class="diagrams">';
+  list.forEach(function(m, i){
+    h += '<figure class="diagram" style="margin:0"><div class="dg-img">' +
+      '<img src="' + cadSrc(m.f) + '" alt="' + p.title + '"></div>' +
+      '<figcaption><b>' + (list.length > 1 ? ("0" + (i+1)) : p.type.toUpperCase()) + '</b>' +
+      '<span>' + m.cap + '</span></figcaption></figure>';
+  });
+  return h + '</div>';
+}
+function cadDetails(p){
+  var h = '<span class="eyebrow">About this model</span>';
+  p.desc.forEach(function(t, i){
+    h += '<p class="' + (i === 0 ? "lead" : "body") + '">' + t + '</p>';
+  });
+  h += '<span class="eyebrow" style="margin:28px 0 14px">Document</span>';
+  h += '<div class="tbl-scroll"><table class="pintable"><tbody>' +
+    '<tr><td>Type</td><td>' + p.type + '</td><td>SolidWorks native document</td></tr>' +
+    '<tr><td>File</td><td>' + p.file + '</td><td>Documents \\ Solidworks \\ My Soliworks Projects</td></tr>' +
+    '<tr><td>Features</td><td>' + p.features.join(", ") + '</td><td>Principal modelling operations</td></tr>' +
+    '</tbody></table></div>';
+  h += '<div class="media-note">Preview rendered from the SolidWorks document itself. ' +
+       'Native <b>.SLDPRT</b> / <b>.SLDASM</b> / <b>.SLDDRW</b> files need SolidWorks or eDrawings to open. ' +
+       'a STEP or PDF export would let anyone view them in a browser.</div>';
+  return h;
+}
+var CAD_TABS = [["Overview", cadDetails], ["Model", cadModel]];
+
+/* ============================================================
+   SOFTWARE PROJECTS
+   ============================================================ */
+var SOFTWARE = [
+{
+  sw:true, id:"tictactoe", code:"PRG-01", lang:"C", env:"Console, Windows",
+  title:"AI Tic-Tac-Toe",
+  blurb:"A console Tic-Tac-Toe in C with a scaling grid from 3x3 to 10x10, a threat-evaluating AI opponent, and binary save/load.",
+  images:[{f:"tictactoe",cap:"The board as the program prints it: green x, yellow 0, live round and score."}],
+  videos:[],
+  files:[["TicTacToe.c","tictactoe"]],
+  overview:[
+    "A course project for Intro to Programming that I pushed well past the brief. The obvious version of Tic-Tac-Toe is a fixed 3x3 grid and a random opponent. This one takes the grid size as input and plays anywhere from 3x3 up to 10x10, keeps a running score across rounds, saves and reloads a game in progress, and plays against an AI that actually reasons about the board.",
+    "Everything runs in the terminal. The board is drawn with escape codes so x prints green and 0 prints yellow, the round number and both scores sit alongside the first row, and every move redraws the whole grid. Entering negative coordinates saves the game and exits, which keeps the save action inside the same input the player is already using instead of adding a separate menu mid-game.",
+    "The scaling grid is what makes the rest of it non-trivial. A hard-coded 3x3 lets you write out all eight win conditions by hand. At variable size you have to check every row, every column and both diagonals in loops, and the AI has to evaluate a board whose shape it does not know at compile time."
+  ],
+  decisions:[
+    {t:"The AI scores threats as a percentage, not as fixed patterns",b:"<code>ai_defend_attack()</code> walks every line and column counting how many cells belong to one symbol, then converts that to <code>procentage_of_win</code>, a percentage of the row length. Scoring as a proportion is what lets the same function work on a 3x3 and a 10x10 board. A pattern table would have to be rewritten for every size."},
+    {t:"Attack above 65%, defend below it",b:"The AI evaluates the board twice per turn, once for its own symbol and once for the player's. If its own best line is at or above 65% complete it plays to finish that line; otherwise it plays to block the player's strongest threat. Choosing offence only when a win is genuinely close, and defending the rest of the time, is what makes it feel like an opponent rather than a blocker. The threshold is one named number, so the difficulty is tunable in one edit."},
+    {t:"Fall back to random only when nothing is threatened",b:"When no line anywhere on the board exceeds <code>ratio = 100/size</code>, there is nothing worth attacking or defending and the AI picks a random empty cell. Early in a large grid almost every move is in that state, so this stops the opening from being deterministic and repetitive."},
+    {t:"Save the whole game as one struct, in binary",b:"<code>file_struct</code> holds the grid size, the mode, the round, both scores and the full board, and the save is a single <code>fwrite</code> of that struct. One write and one read means the save file cannot get half-updated, and adding a field to the game state does not mean rewriting a parser. The trade-off is that the file is not human-readable and is tied to this program's memory layout."},
+    {t:"Infer whose turn it is on load rather than storing it",b:"When a saved game reopens, the loader counts the x and 0 already on the board and derives the current player from which symbol has fewer. The turn is implied by the board, so storing it separately would create a second source of truth that could disagree with the grid it describes."},
+    {t:"Separate the two game modes into their own functions",b:"<code>playerMove()</code> runs human against human and <code>aiMove()</code> runs human against AI, rather than one loop branching on a mode flag at every step. There is some duplicated board handling between them, but each loop stays readable, and changing the AI's behaviour cannot accidentally break two-player mode."}
+  ],
+  notes:[
+    ["TicTacToe.c","Source","The game logic, AI and file handling. 753 lines, one translation unit."],
+    ["ticktock.dat","Save file","Binary store of a saved game state. Created automatically."],
+    ["README","Documentation","Shipped with the submission as both .txt and .pdf."],
+    ["Grid","3x3 to 10x10","Validated on input. Anything outside the range re-prompts."],
+    ["Platform","Windows","Uses conio.h, so it is not portable as written."]
+  ]
+}
+];
+
+function swCardHTML(p, i){
+  return '<button class="card" data-sw="' + i + '" type="button">' +
+    '<div class="thumb"><img src="' + imgSrc(p.images[0].f + "-thumb") + '" alt="' + p.title + '" loading="lazy">' +
+    '<div class="badges"><span class="badge v">' + p.lang + '</span>' +
+    '<span class="badge">' + p.files.length + ' file</span></div></div>' +
+    '<div class="card-body">' +
+      '<div class="card-top"><span class="card-code">' + p.code + '</span>' +
+      '<span class="card-board">' + p.env + '</span></div>' +
+      '<h3>' + p.title + '</h3><p>' + p.blurb + '</p>' +
+      '<div class="card-foot"><span>Console game &middot; Threat-scoring AI</span>' +
+      '<span class="open">Open &rarr;</span></div>' +
+    '</div></button>';
+}
+function swReadme(p){
+  var h = '<span class="eyebrow">README, as written for the submission</span>';
+  h += '<p class="lead">A C-based simulation of the classic Tic-Tac-Toe game. It supports customizable grid sizes (from 3x3 to 10x10) and features two game modes, plus File I/O so a game in progress can be saved and resumed.</p>';
+
+  h += '<div class="decisions" style="border-top:0">';
+  h += '<div class="dec"><span class="n">01</span><div><h4>Player vs. Player</h4>' +
+       '<p>Two human players alternate turns.</p></div></div>';
+  h += '<div class="dec"><span class="n">02</span><div><h4>Player vs. AI</h4>' +
+       '<p>A human player competes against a computer opponent. The AI utilizes a defense/attack strategy to block winning moves and capitalize on opportunities.</p></div></div>';
+  h += '</div>';
+
+  h += '<span class="eyebrow" style="margin:30px 0 14px">Compile and run</span>';
+  h += '<pre class="code">' + highlight("gcc TicTacToe.c -o tictactoe\n\n// Windows\ntictactoe.exe\n\n// Linux / Mac\n./tictactoe") + '</pre>';
+  h += '<p class="body" style="margin-top:14px">The source includes <code>&lt;conio.h&gt;</code>, which is standard for Windows environments (MinGW / Visual Studio). On Linux or macOS that include may need to be removed if it causes errors, as the core logic relies primarily on standard <code>&lt;stdio.h&gt;</code> functions.</p>';
+
+  h += '<span class="eyebrow" style="margin:30px 0 14px">How to play</span>';
+  h += '<ul class="res-list">' +
+    '<li><b>Main menu:</b> New Game, Load Game, or Exit. A new game asks for a grid size (3 to 10) and the mode.</li>' +
+    '<li><b>Grid coordinates</b> use 1-based indexing.</li>' +
+    '<li><b>Making a move:</b> enter the row number followed by the column number, separated by a space. Top-left corner is <code>1 1</code>.</li>' +
+    '<li><b>Save and quit:</b> at the Line and Column prompt, enter a negative number such as <code>-1 -1</code>. The game asks <i>Do you want to save? Y/N</i>, writes the board, scores and round to <code>ticktock.dat</code>, then exits.</li>' +
+    '<li><b>Loading:</b> choose Load Game from the main menu to pick up exactly where you left off.</li>' +
+    '</ul>';
+
+  h += '<span class="eyebrow" style="margin:30px 0 14px">Files included</span>';
+  h += '<div class="tbl-scroll"><table class="pintable"><tbody>';
+  p.notes.forEach(function(r){
+    h += "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  });
+  h += '</tbody></table></div>';
+  h += '<div class="media-note"><b>ENGG1410, Introductory Programming for Engineers</b>, University of Guelph, Fall 2025. ' +
+       'Mini Project #1, Parts 1 and 2.</div>';
+  return h;
+}
+var SW_TABS = [["Overview", tabOverview], ["Media", tabMedia], ["Code", tabCode], ["README", swReadme]];
+
+/* ============================================================
+   SYNTAX HIGHLIGHTER (Arduino C++)
+   ============================================================ */
+var KEYWORDS = ["void","int","float","long","double","char","byte","bool","boolean","unsigned","const","static","String","if","else","for","while","do","return","break","continue","switch","case","true","false","HIGH","LOW","INPUT","OUTPUT","INPUT_PULLUP","DAC","REST","sizeof"];
+var KW_RE = new RegExp(
+  "(\\/\\/[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/)" +      // 1 comment
+  "|(\"(?:[^\"\\\\]|\\\\.)*\")" +                  // 2 string
+  "|(^[ \\t]*#\\w+)" +                             // 3 preprocessor
+  "|\\b(\\d+\\.?\\d*)\\b" +                        // 4 number
+  "|\\b(" + KEYWORDS.join("|") + ")\\b" +          // 5 keyword
+  "|\\b([A-Za-z_]\\w*)(?=\\s*\\()",                // 6 call
+  "gm"
+);
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function highlight(src){
+  var out = "", last = 0, m;
+  KW_RE.lastIndex = 0;
+  while ((m = KW_RE.exec(src)) !== null){
+    out += esc(src.slice(last, m.index));
+    var cls = m[1] ? "t-com" : m[2] ? "t-str" : m[3] ? "t-pre"
+            : m[4] ? "t-num" : m[5] ? "t-key" : "t-fn";
+    out += '<span class="' + cls + '">' + esc(m[0]) + "</span>";
+    last = m.index + m[0].length;
+  }
+  return out + esc(src.slice(last));
+}
+
+/* ============================================================
+   GRID + FILTERS
+   ============================================================ */
+var FNS = ["All","Sensors","Actuation","Display","Analog"];
+var grid = document.getElementById("grid");
+var filterBar = document.getElementById("filters");
+var activeFn = "All";
+
+function cardHTML(p, i){
+  var thumb;
+  if (p.images.length){
+    thumb = '<img src="' + imgSrc(p.images[0].f + "-thumb") + '" alt="' + p.title + '" loading="lazy">';
+  } else if (p.diagrams && p.diagrams.length){
+    thumb = '<img class="dg-thumb" src="' + circSrc(p.diagrams[0].f) + '" alt="' + p.title + ' wiring diagram" loading="lazy">';
+  } else {
+    thumb = '<div class="thumb-ph"><span>Photos pending</span></div>';
+  }
+  var badges = "";
+  if (p.videos.length) badges += '<span class="badge v">' + p.videos.length + ' video</span>';
+  if (p.images.length) badges += '<span class="badge">' + p.images.length + ' photo</span>';
+  if (p.diagrams) badges += '<span class="badge">' + p.diagrams.length + ' diagram</span>';
+  if (p.demo) badges += '<span class="badge v">live demo</span>';
+  badges += '<span class="badge">' + p.files.length + ' file</span>';
+  return '<button class="card" data-i="' + i + '" type="button">' +
+    '<div class="thumb">' + thumb + '<div class="badges">' + badges + '</div></div>' +
+    '<div class="card-body">' +
+      '<div class="card-top"><span class="card-code">' + p.code + '</span>' +
+      '<span class="card-board">' + p.board + '</span></div>' +
+      '<h3>' + p.title + '</h3><p>' + p.blurb + '</p>' +
+      '<div class="card-foot"><span>' + p.tags.join(" &middot; ") + '</span>' +
+      '<span class="open">Open &rarr;</span></div>' +
+    '</div></button>';
+}
+var VIEW = "electronics";
+function renderGrid(){
+  var html = "";
+  if (VIEW === "cad"){
+    CAD.forEach(function(p, i){ html += cadCardHTML(p, i); });
+    filterBar.hidden = true;
+  } else if (VIEW === "software"){
+    SOFTWARE.forEach(function(p, i){ html += swCardHTML(p, i); });
+    filterBar.hidden = true;
+  } else {
+    PROJECTS.forEach(function(p, i){
+      if (activeFn === "All" || p.fn === activeFn) html += cardHTML(p, i);
+    });
+    filterBar.hidden = false;
+  }
+  grid.innerHTML = html;
+}
+(function(){
+  var sw = document.getElementById("viewSwitch");
+  Array.prototype.forEach.call(sw.children, function(b){
+    b.addEventListener("click", function(){
+      VIEW = b.getAttribute("data-view");
+      Array.prototype.forEach.call(sw.children, function(c){
+        c.setAttribute("aria-pressed", String(c === b));
+      });
+      renderGrid();
+    });
+  });
+})();
+FNS.forEach(function(f){
+  var b = document.createElement("button");
+  b.type = "button";
+  b.textContent = f;
+  b.setAttribute("aria-pressed", String(f === "All"));
+  b.addEventListener("click", function(){
+    activeFn = f;
+    Array.prototype.forEach.call(filterBar.children, function(c){
+      c.setAttribute("aria-pressed", String(c === b));
+    });
+    renderGrid();
+  });
+  filterBar.appendChild(b);
+});
+renderGrid();
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+var backdrop = document.getElementById("backdrop");
+var mTabs = document.getElementById("mTabs");
+var mBody = document.getElementById("mBody");
+var current = null, lastFocus = null;
+
+function tabOverview(p){
+  var h = '<span class="eyebrow">About this build</span>';
+  p.overview.forEach(function(t, i){
+    h += '<p class="' + (i === 0 ? "lead" : "body") + '">' + t + '</p>';
+  });
+  h += '<span class="eyebrow" style="margin:30px 0 0">Decisions &amp; trade-offs</span>';
+  h += '<div class="decisions">';
+  p.decisions.forEach(function(d, i){
+    h += '<div class="dec"><span class="n">' + String(i+1).padStart(2,"0") + '</span>' +
+         '<div><h4>' + d.t + '</h4><p>' + d.b + '</p></div></div>';
+  });
+  return h + "</div>";
+}
+function matrixDemoHTML(){
+  return '<figure class="matrix-panel" style="margin:0 0 4px">' +
+    '<canvas id="matrix" width="744" height="504" aria-label="Simulated 8 by 12 LED matrix scrolling the text Jonathan Mihocas"></canvas>' +
+    '<div class="matrix-foot"><span>Live simulation: 8&times;12, 5&times;7 font</span>' +
+    '<span id="matrixLabel">Text_on_Arduino_Matrix.ino</span></div></figure>' +
+    '<p style="font-size:13.5px;color:var(--ink-2);margin:14px 0 0;max-width:70ch">' +
+    'A JavaScript port of the sketch, running in your browser: same 12-column window, ' +
+    'same 5&times;7 glyphs, same one-pixel top offset, same left scroll.</p>';
+}
+function tabMedia(p){
+  if (p.demo === "matrix") return matrixDemoHTML();
+  if (!p.images.length && !p.videos.length){
+    return '<div class="media-note">No photos or video captured for this build yet.<br>' +
+      'Drop files into <b>Portfolio Projects/' + p.id + '/</b> and they can be wired in here.</div>';
+  }
+  var h = '<div class="media-stack">';
+  p.images.forEach(function(im, i){
+    h += '<figure class="media-item" style="margin:0">' +
+      '<img src="' + imgSrc(im.f) + '" alt="' + im.cap + '" loading="lazy">' +
+      '<figcaption><b>FIG ' + String(i+1).padStart(2,"0") + '</b><span>' + im.cap + '</span></figcaption>' +
+      '</figure>';
+  });
+  p.videos.forEach(function(v, i){
+    var name = decodeURIComponent(v.f.split("/").pop());
+    if (MEDIA_MODE === "local"){
+      h += '<figure class="media-item" style="margin:0">' +
+        '<video controls preload="metadata" playsinline src="' + VID + v.f + '"></video>' +
+        '<figcaption><b>VID ' + String(i+1).padStart(2,"0") + '</b><span>' + v.cap + '</span></figcaption>' +
+        '</figure>';
+    } else {
+      h += '<div class="media-note"><b>VID ' + String(i+1).padStart(2,"0") + ': ' + v.cap + '</b><br>' +
+        name + '<br>Video ships with the downloadable build. 720p H.264, 29 MB for all nine clips.</div>';
+    }
+  });
+  return h + "</div>";
+}
+function tabCode(p){
+  var h = "";
+  if (p.files.length > 1){
+    h += '<div class="file-tabs" id="fileTabs">';
+    p.files.forEach(function(f, i){
+      h += '<button type="button" data-k="' + f[1] + '" aria-pressed="' + (i===0) + '">' + f[0] + '</button>';
+    });
+    h += "</div>";
+  } else {
+    h += '<span class="eyebrow">' + p.files[0][0] + '</span>';
+  }
+  h += '<pre class="code" id="codeBox">' + highlight(CODE[p.files[0][1]] || "// source not found") + "</pre>";
+  return h;
+}
+function tabCircuit(p){
+  var h = "";
+  if (p.diagrams && p.diagrams.length){
+    h += '<span class="eyebrow">Wiring &amp; schematic</span><div class="diagrams">';
+    p.diagrams.forEach(function(d){
+      h += '<figure class="diagram"><div class="dg-img">' +
+        '<img src="' + circSrc(d.f) + '" alt="' + d.cap + '" loading="lazy"></div>' +
+        '<figcaption><b>' + d.kind + '</b><span>' + d.cap + '</span></figcaption></figure>';
+    });
+    h += '</div>';
+  }
+  h += '<span class="eyebrow">Pin map: ' + p.board + '</span>' +
+    '<div class="tbl-scroll"><table class="pintable"><thead><tr>' +
+    "<th>Pin</th><th>Net</th><th>Notes</th></tr></thead><tbody>";
+  p.pins.forEach(function(r){
+    h += "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>";
+  });
+  h += "</tbody></table></div>";
+  h += '<div class="media-note">Pin assignments are read straight out of the sketch, so this table ' +
+       'and the firmware cannot drift apart.';
+  if (p.ref){
+    h += '<br><a class="ref-link" href="' + p.ref.u + '" target="_blank" rel="noopener">' +
+         'Reference build &rarr; ' + p.ref.t + '</a>';
+  }
+  h += '</div>';
+  return h;
+}
+var TABS = [
+  ["Overview", tabOverview],
+  ["Media", tabMedia],
+  ["Code", tabCode],
+  ["Circuit", tabCircuit]
+];
+function showTab(n){
+  var T = tabsFor(current);
+  Array.prototype.forEach.call(mTabs.children, function(b, i){
+    b.setAttribute("aria-selected", String(i === n));
+  });
+  stopMatrix();
+  mBody.innerHTML = T[n][1](current);
+  mBody.scrollTop = 0;
+  if (current.demo === "matrix" && T[n][0] === "Media"){
+    mountMatrix(document.getElementById("matrix"));
+  }
+  var ft = document.getElementById("fileTabs");
+  if (ft){
+    ft.addEventListener("click", function(e){
+      var b = e.target.closest("button");
+      if (!b) return;
+      Array.prototype.forEach.call(ft.children, function(c){
+        c.setAttribute("aria-pressed", String(c === b));
+      });
+      document.getElementById("codeBox").innerHTML =
+        highlight(CODE[b.getAttribute("data-k")] || "// source not found");
+    });
+  }
+}
+function tabsFor(p){
+  if (p.cad) return CAD_TABS;
+  if (p.sw) return SW_TABS;
+  return TABS;
+}
+function openProject(i, kind){
+  current = kind === "cad" ? CAD[i] : kind === "sw" ? SOFTWARE[i] : PROJECTS[i];
+  lastFocus = document.activeElement;
+  var T = tabsFor(current);
+  var meta = current.cad ? (current.type + " &nbsp;/&nbsp; SOLIDWORKS")
+           : current.sw ? (current.lang + " &nbsp;/&nbsp; " + current.env)
+           : current.board;
+  document.getElementById("mCode").innerHTML = current.code + " &nbsp;/&nbsp; " + meta;
+  document.getElementById("mTitle").innerHTML = current.title;
+  document.getElementById("mBlurb").innerHTML = current.blurb;
+  mTabs.innerHTML = T.map(function(t, n){
+    return '<button type="button" role="tab" aria-selected="' + (n===0) + '">' + t[0] + "</button>";
+  }).join("");
+  Array.prototype.forEach.call(mTabs.children, function(b, n){
+    b.addEventListener("click", function(){ showTab(n); });
+  });
+  showTab(0);
+  backdrop.hidden = false;
+  document.body.style.overflow = "hidden";
+  document.getElementById("mClose").focus();
+}
+function closeProject(){
+  stopMatrix();
+  backdrop.hidden = true;
+  document.body.style.overflow = "";
+  mBody.innerHTML = "";
+  if (lastFocus) lastFocus.focus();
+}
+grid.addEventListener("click", function(e){
+  var c = e.target.closest(".card");
+  if (!c) return;
+  if (c.hasAttribute("data-cad")) openProject(Number(c.getAttribute("data-cad")), "cad");
+  else if (c.hasAttribute("data-sw")) openProject(Number(c.getAttribute("data-sw")), "sw");
+  else openProject(Number(c.getAttribute("data-i")), "elec");
+});
+document.getElementById("mClose").addEventListener("click", closeProject);
+backdrop.addEventListener("click", function(e){ if (e.target === backdrop) closeProject(); });
+document.addEventListener("keydown", function(e){
+  if (e.key === "Escape" && !backdrop.hidden) closeProject();
+});
+
+/* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+var themeBtn = document.getElementById("themeBtn");
+try {
+  var saved = localStorage.getItem("mihocas-theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+} catch (err) { /* private mode, fall through to system/dark default */ }
+themeBtn.addEventListener("click", function(){
+  var isLight = document.documentElement.getAttribute("data-theme") === "light";
+  var next = isLight ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("mihocas-theme", next); } catch (err) {}
+});
+
+/* ============================================================
+   HERO: 8x12 LED MATRIX, a JS port of Text_on_Arduino_Matrix.ino
+   5x7 glyphs, one-pixel top offset, SCROLL_LEFT.
+   ============================================================ */
+var FONT = {
+  "A":".###./#...#/#...#/#####/#...#/#...#/#...#",
+  "B":"####./#...#/#...#/####./#...#/#...#/####.",
+  "C":".###./#...#/#..../#..../#..../#...#/.###.",
+  "D":"####./#...#/#...#/#...#/#...#/#...#/####.",
+  "E":"#####/#..../#..../####./#..../#..../#####",
+  "F":"#####/#..../#..../####./#..../#..../#....",
+  "G":".###./#...#/#..../#.###/#...#/#...#/.###.",
+  "H":"#...#/#...#/#...#/#####/#...#/#...#/#...#",
+  "I":".###./..#../..#../..#../..#../..#../.###.",
+  "J":"..###/...#./...#./...#./...#./#..#./.##..",
+  "K":"#...#/#..#./#.#../##.../#.#../#..#./#...#",
+  "L":"#..../#..../#..../#..../#..../#..../#####",
+  "M":"#...#/##.##/#.#.#/#...#/#...#/#...#/#...#",
+  "N":"#...#/##..#/#.#.#/#..##/#...#/#...#/#...#",
+  "O":".###./#...#/#...#/#...#/#...#/#...#/.###.",
+  "P":"####./#...#/#...#/####./#..../#..../#....",
+  "Q":".###./#...#/#...#/#...#/#.#.#/#..##/.##.#",
+  "R":"####./#...#/#...#/####./#.#../#..#./#...#",
+  "S":".###./#...#/#..../.###./....#/#...#/.###.",
+  "T":"#####/..#../..#../..#../..#../..#../..#..",
+  "U":"#...#/#...#/#...#/#...#/#...#/#...#/.###.",
+  "V":"#...#/#...#/#...#/#...#/#...#/.#.#./..#..",
+  "W":"#...#/#...#/#...#/#...#/#.#.#/##.##/#...#",
+  "X":"#...#/#...#/.#.#./..#../.#.#./#...#/#...#",
+  "Y":"#...#/#...#/.#.#./..#../..#../..#../..#..",
+  "Z":"#####/....#/...#./..#../.#.../#..../#####",
+  "/":"....#/....#/...#./..#../.#.../#..../#....",
+  "-":"...../...../...../#####/...../...../.....",
+  ".":"...../...../...../...../...../.##../.##..",
+  "·":"...../...../..##./..##./...../...../.....",
+  " ":"...../...../...../...../...../...../....."
+};
+var matrixRAF = null;
+function stopMatrix(){
+  if (matrixRAF !== null){ cancelAnimationFrame(matrixRAF); matrixRAF = null; }
+}
+function mountMatrix(canvas){
+  if (!canvas) return;
+  stopMatrix();
+  var ctx = canvas.getContext("2d");
+  var COLS = 12, ROWS = 8, TOP = 1;
+  var MSG = "JONATHAN MIHOCAS · EMBEDDED SYSTEMS · CIRCUITS · CAD · ";
+
+  /* build one tall column-bitmap for the whole message */
+  var cols = [];
+  for (var c = 0; c < MSG.length; c++){
+    var g = FONT[MSG[c]] || FONT[" "];
+    var rows = g.split("/");
+    for (var x = 0; x < 5; x++){
+      var col = 0;
+      for (var y = 0; y < 7; y++){
+        if (rows[y][x] === "#") col |= (1 << (y + TOP));
+      }
+      cols.push(col);
+    }
+    cols.push(0); /* inter-character gap */
+  }
+
+  function draw(offset){
+    var W = canvas.width, H = canvas.height;
+    var cw = W / COLS, ch = H / ROWS;
+    var r = Math.min(cw, ch) * 0.31;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#090C11";
+    ctx.fillRect(0, 0, W, H);
+    for (var x = 0; x < COLS; x++){
+      var bits = cols[(offset + x) % cols.length];
+      for (var y = 0; y < ROWS; y++){
+        var on = (bits >> y) & 1;
+        var cx = (x + 0.5) * cw, cy = (y + 0.5) * ch;
+        if (on){
+          ctx.shadowColor = "rgba(255,75,43,.85)";
+          ctx.shadowBlur = r * 1.9;
+          ctx.fillStyle = "#FF5335";
+        } else {
+          ctx.shadowColor = "transparent";
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#1B1E24";
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  draw(0);
+  var label = document.getElementById("matrixLabel");
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+    if (label) label.textContent = "scroll paused";
+    return;
+  }
+  var off = 0, t0 = 0;
+  function frame(t){
+    if (t - t0 > 70){ off = (off + 1) % cols.length; t0 = t; draw(off); }
+    matrixRAF = requestAnimationFrame(frame);
+  }
+  matrixRAF = requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   ROUTER - the resume lives at #resume as its own page
+   ============================================================ */
+(function(){
+  var home = document.getElementById("pageHome");
+  var resume = document.getElementById("pageResume");
+  var navLinks = document.querySelectorAll(".nav-links a");
+
+  function route(){
+    var onResume = location.hash === "#resume";
+    home.hidden = onResume;
+    resume.hidden = !onResume;
+    Array.prototype.forEach.call(navLinks, function(a){
+      a.style.color = (a.getAttribute("href") === "#resume" && onResume) ? "var(--led)" : "";
+    });
+    if (onResume) window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", function(){
+    var wasResume = !resume.hidden;
+    route();
+    if (wasResume && location.hash && location.hash !== "#resume"){
+      var t = document.querySelector(location.hash);
+      if (t) t.scrollIntoView();
+    }
+  });
+  route();
+})();
+</script>
